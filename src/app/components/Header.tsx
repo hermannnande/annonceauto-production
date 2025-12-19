@@ -3,10 +3,16 @@ import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, Car, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
+import { UserMenu } from './UserMenu';
+import { useAuth } from '../../hooks/useAuth';
+import { UserMenu } from './UserMenu';
+import { useAuth } from '../../hooks/useAuth';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const { user, logout } = useAuth();
+  const userConnected = !!user;
   const location = useLocation();
 
   useEffect(() => {
