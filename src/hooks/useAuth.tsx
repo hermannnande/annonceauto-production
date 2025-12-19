@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { authService } from '../services/auth.service';
+import * as authService from '../services/auth.service';
 
 interface User {
   id: number;
@@ -50,19 +50,64 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    const response = await authService.login(email, password);
+    const response = await authService.login({ email, password });
+    
+    if (!response.success || !response.token || !response.user) {
+      throw new Error(response.message || 'Erreur de connexion');
+    }
+    
+    // Mapper les données de l'API vers notre format
+    const user: User = {
+      id: response.user.id,
+      email: response.user.email,
+      nom: response.user.full_name.split(' ')[0] || '',
+      prenom: response.user.full_name.split(' ').slice(1).join(' ') || '',
+      telephone: response.user.phone,
+      role: response.user.role === 'admin' ? 'admin' : 'vendeur',
+      credits: response.user.credits,
+      avatar_url: response.user.profile_image,
+      verified: response.user.is_verified
+    };
+    
     setToken(response.token);
-    setUser(response.user);
+    setUser(user);
     localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(response.user));
+    localStorage.setItem('user', JSON.stringify(user));
   };
 
   const register = async (data: any) => {
-    const response = await authService.register(data);
+    const registerData = {
+      email: data.email,
+      password: data.password,
+      full_name: `${data.nom} ${data.prenom}`,
+      phone: data.telephone,
+      role: 'vendor' as const
+    };
+    
+    const response = await authService.register(registerData);
+    
+    if (!response.success || !response.token || !response.user) {
+      throw new Error(response.message || 'Erreur lors de l\'inscription');
+    }
+    
+    // Mapper les données de l'API vers notre format
+    const user: User = {
+      id: response.user.id,
+      email: response.user.email,
+      nom: data.nom,
+      prenom: data.prenom,
+      telephone: response.user.phone,
+      ville: data.ville,
+      role: response.user.role === 'admin' ? 'admin' : 'vendeur',
+      credits: response.user.credits,
+      avatar_url: response.user.profile_image,
+      verified: response.user.is_verified
+    };
+    
     setToken(response.token);
-    setUser(response.user);
+    setUser(user);
     localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(response.user));
+    localStorage.setItem('user', JSON.stringify(user));
   };
 
   const logout = () => {
