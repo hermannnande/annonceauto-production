@@ -1,9 +1,12 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Sparkles, ChevronDown } from 'lucide-react';
+import { Search, Sparkles, ChevronDown, X } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Input } from './ui/input';
+import { mockVehicles } from '../data/vehicles';
+import { VehicleCard } from './VehicleCard';
 
 // Liste complète des marques de véhicules
 const CAR_BRANDS = [
@@ -18,22 +21,98 @@ const CAR_BRANDS = [
 ].sort();
 
 export function SearchBar() {
+  const navigate = useNavigate();
   const [brand, setBrand] = useState('');
   const [brandSearch, setBrandSearch] = useState('');
-  const [model, setModel] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
   const [minPrice, setMinPrice] = useState('');
   const [maxPrice, setMaxPrice] = useState('');
   const [year, setYear] = useState('');
   const [type, setType] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showResults, setShowResults] = useState(false);
 
   // Filtrer les marques selon la recherche
   const filteredBrands = CAR_BRANDS.filter(b => 
     b.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
+  // Filtrer les véhicules en temps réel
+  const filteredVehicles = useMemo(() => {
+    if (!searchQuery && !brand && !minPrice && !maxPrice && !year && !type) {
+      return [];
+    }
+
+    let result = [...mockVehicles];
+
+    // Recherche par texte
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(v => 
+        v.brand.toLowerCase().includes(query) || 
+        v.model.toLowerCase().includes(query) ||
+        v.location.toLowerCase().includes(query)
+      );
+    }
+
+    // Filtre par marque
+    if (brand && brand !== 'all') {
+      result = result.filter(v => v.brand.toLowerCase() === brand);
+    }
+
+    // Filtre par prix
+    if (minPrice) {
+      result = result.filter(v => v.price >= parseInt(minPrice));
+    }
+    if (maxPrice) {
+      result = result.filter(v => v.price <= parseInt(maxPrice));
+    }
+
+    // Filtre par année
+    if (year && year !== '2019') {
+      result = result.filter(v => v.year === parseInt(year));
+    } else if (year === '2019') {
+      result = result.filter(v => v.year <= 2019);
+    }
+
+    // Filtre par type
+    if (type) {
+      result = result.filter(v => v.condition === type);
+    }
+
+    return result.slice(0, 6); // Limiter à 6 résultats pour l'aperçu
+  }, [searchQuery, brand, minPrice, maxPrice, year, type]);
+
+  // Afficher les résultats quand il y a une recherche
+  useMemo(() => {
+    if (searchQuery || brand || minPrice || maxPrice || year || type) {
+      setShowResults(true);
+    } else {
+      setShowResults(false);
+    }
+  }, [searchQuery, brand, minPrice, maxPrice, year, type]);
+
   const handleSearch = () => {
-    console.log('Search params:', { brand, model, minPrice, maxPrice, year, type });
+    // Construire l'URL avec les paramètres de recherche
+    const params = new URLSearchParams();
+    if (searchQuery) params.append('q', searchQuery);
+    if (brand) params.append('brand', brand);
+    if (minPrice) params.append('minPrice', minPrice);
+    if (maxPrice) params.append('maxPrice', maxPrice);
+    if (year) params.append('year', year);
+    if (type) params.append('type', type);
+    
+    navigate(`/annonces?${params.toString()}`);
+  };
+
+  const clearSearch = () => {
+    setSearchQuery('');
+    setBrand('');
+    setMinPrice('');
+    setMaxPrice('');
+    setYear('');
+    setType('');
+    setShowResults(false);
   };
 
   return (
@@ -52,14 +131,23 @@ export function SearchBar() {
         {/* Simple Search - Always Visible */}
         <div className="flex flex-col md:flex-row gap-3 items-center">
           {/* Search Input */}
-          <div className="flex-1 w-full">
+          <div className="flex-1 w-full relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400 z-10" />
             <Input
               type="text"
               placeholder="Rechercher une marque, un modèle, une localisation..."
-              value={model}
-              onChange={(e) => setModel(e.target.value)}
-              className="h-14 border-2 border-gray-200 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors bg-white/50 backdrop-blur-sm text-base px-6"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-14 border-2 border-gray-200 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors bg-white/50 backdrop-blur-sm text-base px-12"
             />
+            {searchQuery && (
+              <button
+                onClick={() => setSearchQuery('')}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors z-10"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
 
           {/* Search Button */}
@@ -111,7 +199,7 @@ export function SearchBar() {
                       </SelectTrigger>
                       <SelectContent>
                         {/* Barre de recherche */}
-                        <div className="px-2 py-2 border-b">
+                        <div className="px-2 py-2 border-b sticky top-0 bg-white z-10">
                           <Input
                             placeholder="Rechercher une marque..."
                             value={brandSearch}
@@ -186,6 +274,7 @@ export function SearchBar() {
                         <SelectValue placeholder="Toutes" />
                       </SelectTrigger>
                       <SelectContent>
+                        <SelectItem value="all">Toutes</SelectItem>
                         <SelectItem value="2024">2024</SelectItem>
                         <SelectItem value="2023">2023</SelectItem>
                         <SelectItem value="2022">2022</SelectItem>
@@ -207,8 +296,9 @@ export function SearchBar() {
                         <SelectValue placeholder="Tous" />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="neuf">Neuf</SelectItem>
-                        <SelectItem value="occasion">Occasion</SelectItem>
+                        <SelectItem value="all">Tous</SelectItem>
+                        <SelectItem value="new">Neuf</SelectItem>
+                        <SelectItem value="used">Occasion</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
@@ -218,29 +308,88 @@ export function SearchBar() {
           )}
         </AnimatePresence>
 
+        {/* Résultats en temps réel */}
+        <AnimatePresence>
+          {showResults && filteredVehicles.length > 0 && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: 'auto', opacity: 1 }}
+              exit={{ height: 0, opacity: 0 }}
+              transition={{ duration: 0.3 }}
+              className="overflow-hidden"
+            >
+              <div className="mt-6 pt-6 border-t border-gray-200">
+                <div className="flex items-center justify-between mb-4">
+                  <h3 className="text-lg font-bold text-[#0F172A]">
+                    {filteredVehicles.length} résultat{filteredVehicles.length > 1 ? 's' : ''} trouvé{filteredVehicles.length > 1 ? 's' : ''}
+                  </h3>
+                  <Button
+                    variant="ghost"
+                    onClick={clearSearch}
+                    className="text-gray-500 hover:text-gray-700 gap-2"
+                  >
+                    <X className="w-4 h-4" />
+                    Effacer
+                  </Button>
+                </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto">
+                  {filteredVehicles.map((vehicle) => (
+                    <VehicleCard key={vehicle.id} vehicle={vehicle} />
+                  ))}
+                </div>
+                {mockVehicles.filter(v => {
+                  const query = searchQuery.toLowerCase();
+                  return (searchQuery && (v.brand.toLowerCase().includes(query) || v.model.toLowerCase().includes(query) || v.location.toLowerCase().includes(query))) ||
+                    (brand && brand !== 'all' && v.brand.toLowerCase() === brand) ||
+                    (minPrice && v.price >= parseInt(minPrice)) ||
+                    (maxPrice && v.price <= parseInt(maxPrice)) ||
+                    (year && year !== '2019' && v.year === parseInt(year)) ||
+                    (year === '2019' && v.year <= 2019) ||
+                    (type && v.condition === type);
+                }).length > 6 && (
+                  <div className="mt-4 text-center">
+                    <Button
+                      onClick={handleSearch}
+                      className="bg-[#FACC15] text-[#0F172A] hover:bg-[#FBBF24]"
+                    >
+                      Voir tous les résultats ({mockVehicles.length})
+                    </Button>
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Quick Filters */}
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <p className="text-sm text-gray-600 mb-3 font-medium">Recherches populaires :</p>
-          <div className="flex flex-wrap gap-2">
-            {[
-              'Toyota Camry',
-              'SUV Occasion',
-              'Mercedes Neuf',
-              'Prix < 20M',
-              'Automatique',
-              'Diesel'
-            ].map((tag) => (
-              <motion.button
-                key={tag}
-                whileHover={{ scale: 1.05 }}
-                whileTap={{ scale: 0.95 }}
-                className="px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-[#FACC15]/20 hover:to-[#FBBF24]/20 rounded-full text-sm font-medium text-gray-700 hover:text-[#0F172A] border border-gray-200 hover:border-[#FACC15] transition-all duration-300"
-              >
-                {tag}
-              </motion.button>
-            ))}
+        {!showResults && (
+          <div className="mt-6 pt-6 border-t border-gray-200">
+            <p className="text-sm text-gray-600 mb-3 font-medium">Recherches populaires :</p>
+            <div className="flex flex-wrap gap-2">
+              {[
+                { label: 'Toyota Camry', query: 'Toyota Camry' },
+                { label: 'SUV Occasion', query: 'SUV' },
+                { label: 'Mercedes Neuf', query: 'Mercedes' },
+                { label: 'Prix < 20M', max: '20000000' },
+                { label: 'Automatique', query: 'automatique' },
+                { label: 'Diesel', query: 'diesel' }
+              ].map((tag) => (
+                <motion.button
+                  key={tag.label}
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                  onClick={() => {
+                    if (tag.query) setSearchQuery(tag.query);
+                    if (tag.max) setMaxPrice(tag.max);
+                  }}
+                  className="px-4 py-2 bg-gradient-to-r from-gray-100 to-gray-50 hover:from-[#FACC15]/20 hover:to-[#FBBF24]/20 rounded-full text-sm font-medium text-gray-700 hover:text-[#0F172A] border border-gray-200 hover:border-[#FACC15] transition-all duration-300"
+                >
+                  {tag.label}
+                </motion.button>
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
     </motion.div>
   );
