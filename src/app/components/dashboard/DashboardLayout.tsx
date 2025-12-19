@@ -1,4 +1,4 @@
-import { ReactNode } from 'react';
+﻿import { ReactNode } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
@@ -38,17 +38,17 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
     { icon: TrendingUp, label: 'Booster', path: '/dashboard/vendeur/booster' },
     { icon: CreditCard, label: 'Recharger', path: '/dashboard/vendeur/recharge' },
     { icon: BarChart3, label: 'Statistiques', path: '/dashboard/vendeur/stats' },
-    { icon: Settings, label: 'Paramètres', path: '/dashboard/vendeur/settings' },
+    { icon: Settings, label: 'ParamÃ¨tres', path: '/dashboard/vendeur/settings' },
   ];
 
   const adminMenuItems = [
     { icon: LayoutDashboard, label: 'Vue d\'ensemble', path: '/dashboard/admin' },
-    { icon: FileCheck, label: 'Modération', path: '/dashboard/admin/moderation' },
+    { icon: FileCheck, label: 'ModÃ©ration', path: '/dashboard/admin/moderation' },
     { icon: Users, label: 'Utilisateurs', path: '/dashboard/admin/users' },
-    { icon: Wallet, label: 'Crédits', path: '/dashboard/admin/credits' },
+    { icon: Wallet, label: 'CrÃ©dits', path: '/dashboard/admin/credits' },
     { icon: DollarSign, label: 'Paiements', path: '/dashboard/admin/payments' },
     { icon: BarChart3, label: 'Analytics', path: '/dashboard/admin/analytics' },
-    { icon: Settings, label: 'Paramètres', path: '/dashboard/admin/settings' },
+    { icon: Settings, label: 'ParamÃ¨tres', path: '/dashboard/admin/settings' },
   ];
 
   const menuItems = userType === 'vendor' ? vendorMenuItems : adminMenuItems;
@@ -138,7 +138,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             className="w-full flex items-center gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-50 transition-all duration-200 group mt-8"
           >
             <LogOut className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            <span className="font-semibold">Déconnexion</span>
+            <span className="font-semibold">DÃ©connexion</span>
           </button>
         </nav>
 
@@ -148,14 +148,14 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             <div className="bg-gradient-to-br from-[#0F172A] to-[#1e293b] rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <Wallet className="w-4 h-4" />
-                <span className="text-sm opacity-80">Mes crédits</span>
+                <span className="text-sm opacity-80">Mes crÃ©dits</span>
               </div>
               <div className="text-2xl font-bold">2,500 CFA</div>
               <Link
                 to="/dashboard/vendeur/recharge"
                 className="text-xs text-[#FACC15] hover:text-[#FBBF24] mt-2 inline-block"
               >
-                Recharger →
+                Recharger â†’
               </Link>
             </div>
           </div>

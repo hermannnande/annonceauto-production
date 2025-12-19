@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, Car, Sparkles } from 'lucide-react';
@@ -19,8 +19,8 @@ export function Header() {
 
   const navItems = [
     { label: 'Acheter une voiture', path: '/annonces' },
-    { label: 'Déposer une annonce', path: '/publier' },
-    { label: 'Comment ça marche', path: '/#comment-ca-marche' },
+    { label: 'DÃ©poser une annonce', path: '/publier' },
+    { label: 'Comment Ã§a marche', path: '/#comment-ca-marche' },
     { label: 'Mon Espace', path: '/dashboard' },
   ];
 
@@ -42,7 +42,7 @@ export function Header() {
           className="flex items-center justify-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
-          <span>🎉 Offre spéciale : Publication gratuite pour les nouveaux vendeurs !</span>
+          <span>ðŸŽ‰ Offre spÃ©ciale : Publication gratuite pour les nouveaux vendeurs !</span>
           <Sparkles className="w-4 h-4" />
         </motion.div>
       </div>
@@ -100,7 +100,7 @@ export function Header() {
             >
               <Link to="/publier">
                 <Sparkles className="w-4 h-4" />
-                Publier mon véhicule
+                Publier mon vÃ©hicule
               </Link>
             </Button>
           </motion.div>
@@ -167,7 +167,7 @@ export function Header() {
                     >
                       <Link to="/publier" onClick={() => setMobileMenuOpen(false)}>
                         <Sparkles className="w-4 h-4" />
-                        Publier mon véhicule
+                        Publier mon vÃ©hicule
                       </Link>
                     </Button>
                   </motion.div>
