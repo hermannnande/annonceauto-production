@@ -25,7 +25,6 @@ export function Header() {
     { label: 'Acheter une voiture', path: '/annonces' },
     { label: 'Déposer une annonce', path: '/publier' },
     { label: 'Comment ça marche', path: '/#comment-ca-marche' },
-    { label: 'Mon Espace', path: '/dashboard' },
   ];
 
   return (
