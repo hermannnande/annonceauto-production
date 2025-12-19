@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+﻿import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import * as authService from '../services/auth.service';
 
 interface User {
@@ -26,12 +26,27 @@ interface AuthContextType {
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+function mapApiUserToLocal(user: authService.User): User {
+  const [firstName, ...rest] = (user.full_name || '').split(' ');
+  return {
+    id: user.id,
+    email: user.email,
+    nom: firstName || '',
+    prenom: rest.join(' ') || '',
+    telephone: user.phone,
+    role: user.role === 'admin' ? 'admin' : 'vendeur',
+    credits: user.credits,
+    avatar_url: user.profile_image,
+    verified: user.is_verified,
+  };
+}
+
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Charger l'utilisateur depuis le localStorage au dÃ©marrage
+  // Charge les infos stockÃ©es si prÃ©sentes
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
@@ -56,18 +71,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(response.message || 'Erreur de connexion');
     }
 
-    const mappedUser: User = {
-      id: response.user.id,
-      email: response.user.email,
-      nom: response.user.full_name.split(' ')[0] || '',
-      prenom: response.user.full_name.split(' ').slice(1).join(' ') || '',
-      telephone: response.user.phone,
-      role: response.user.role === 'admin' ? 'admin' : 'vendeur',
-      credits: response.user.credits,
-      avatar_url: response.user.profile_image,
-      verified: response.user.is_verified,
-    };
-
+    const mappedUser = mapApiUserToLocal(response.user);
     setToken(response.token);
     setUser(mappedUser);
     localStorage.setItem('token', response.token);
@@ -78,7 +82,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const registerData = {
       email: data.email,
       password: data.password,
-      full_name: ${data.nom} ,
+      full_name: `${data.nom} ${data.prenom}`.trim(),
       phone: data.telephone,
       role: 'vendor' as const,
     };
@@ -89,19 +93,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(response.message || "Erreur lors de l'inscription");
     }
 
-    const mappedUser: User = {
-      id: response.user.id,
-      email: response.user.email,
-      nom: data.nom,
-      prenom: data.prenom,
-      telephone: response.user.phone,
-      ville: data.ville,
-      role: response.user.role === 'admin' ? 'admin' : 'vendeur',
-      credits: response.user.credits,
-      avatar_url: response.user.profile_image,
-      verified: response.user.is_verified,
-    };
-
+    const mappedUser = mapApiUserToLocal(response.user);
     setToken(response.token);
     setUser(mappedUser);
     localStorage.setItem('token', response.token);
