@@ -1,12 +1,11 @@
 import { useState, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Search, Sparkles, ChevronDown, X } from 'lucide-react';
+import { Search, Sparkles, ChevronDown, X, MapPin, Calendar, Gauge } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from './ui/button';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
 import { Input } from './ui/input';
 import { mockVehicles } from '../data/vehicles';
-import { VehicleCard } from './VehicleCard';
 
 // Liste complète des marques de véhicules
 const CAR_BRANDS = [
@@ -30,7 +29,6 @@ export function SearchBar() {
   const [year, setYear] = useState('');
   const [type, setType] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
-  const [showResults, setShowResults] = useState(false);
 
   // Filtrer les marques selon la recherche
   const filteredBrands = CAR_BRANDS.filter(b => 
@@ -69,31 +67,26 @@ export function SearchBar() {
     }
 
     // Filtre par année
-    if (year && year !== '2019') {
-      result = result.filter(v => v.year === parseInt(year));
-    } else if (year === '2019') {
-      result = result.filter(v => v.year <= 2019);
+    if (year && year !== 'all') {
+      if (year === '2019') {
+        result = result.filter(v => v.year <= 2019);
+      } else {
+        result = result.filter(v => v.year === parseInt(year));
+      }
     }
 
     // Filtre par type
-    if (type) {
+    if (type && type !== 'all') {
       result = result.filter(v => v.condition === type);
     }
 
-    return result.slice(0, 6); // Limiter à 6 résultats pour l'aperçu
+    return result.slice(0, 12); // Limiter à 12 résultats
   }, [searchQuery, brand, minPrice, maxPrice, year, type]);
 
-  // Afficher les résultats quand il y a une recherche
-  useMemo(() => {
-    if (searchQuery || brand || minPrice || maxPrice || year || type) {
-      setShowResults(true);
-    } else {
-      setShowResults(false);
-    }
-  }, [searchQuery, brand, minPrice, maxPrice, year, type]);
+  const hasSearch = searchQuery || brand || minPrice || maxPrice || year || type;
+  const showResults = hasSearch && filteredVehicles.length > 0;
 
   const handleSearch = () => {
-    // Construire l'URL avec les paramètres de recherche
     const params = new URLSearchParams();
     if (searchQuery) params.append('q', searchQuery);
     if (brand) params.append('brand', brand);
@@ -112,7 +105,6 @@ export function SearchBar() {
     setMaxPrice('');
     setYear('');
     setType('');
-    setShowResults(false);
   };
 
   return (
@@ -308,9 +300,9 @@ export function SearchBar() {
           )}
         </AnimatePresence>
 
-        {/* Résultats en temps réel */}
+        {/* Résultats en temps réel - VERSION COMPACTE */}
         <AnimatePresence>
-          {showResults && filteredVehicles.length > 0 && (
+          {showResults && (
             <motion.div
               initial={{ height: 0, opacity: 0 }}
               animate={{ height: 'auto', opacity: 1 }}
@@ -319,50 +311,102 @@ export function SearchBar() {
               className="overflow-hidden"
             >
               <div className="mt-6 pt-6 border-t border-gray-200">
-                <div className="flex items-center justify-between mb-4">
-                  <h3 className="text-lg font-bold text-[#0F172A]">
-                    {filteredVehicles.length} résultat{filteredVehicles.length > 1 ? 's' : ''} trouvé{filteredVehicles.length > 1 ? 's' : ''}
+                <div className="flex items-center justify-between mb-3">
+                  <h3 className="text-sm font-bold text-[#0F172A]">
+                    {filteredVehicles.length} résultat{filteredVehicles.length > 1 ? 's' : ''}
                   </h3>
                   <Button
                     variant="ghost"
+                    size="sm"
                     onClick={clearSearch}
-                    className="text-gray-500 hover:text-gray-700 gap-2"
+                    className="text-gray-500 hover:text-gray-700 gap-1 h-8"
                   >
-                    <X className="w-4 h-4" />
+                    <X className="w-3 h-3" />
                     Effacer
                   </Button>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 max-h-[600px] overflow-y-auto">
+                
+                {/* Grille compacte 4 colonnes */}
+                <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 max-h-[400px] overflow-y-auto pr-2">
                   {filteredVehicles.map((vehicle) => (
-                    <VehicleCard key={vehicle.id} vehicle={vehicle} />
+                    <motion.div
+                      key={vehicle.id}
+                      initial={{ opacity: 0, scale: 0.9 }}
+                      animate={{ opacity: 1, scale: 1 }}
+                      className="bg-white rounded-lg shadow-sm hover:shadow-md transition-shadow cursor-pointer overflow-hidden border border-gray-100"
+                      onClick={() => navigate(`/vehicule/${vehicle.id}`)}
+                    >
+                      {/* Image miniature */}
+                      <div className="relative h-24 overflow-hidden">
+                        <img 
+                          src={vehicle.images[0]} 
+                          alt={`${vehicle.brand} ${vehicle.model}`}
+                          className="w-full h-full object-cover"
+                        />
+                        {vehicle.featured && (
+                          <span className="absolute top-1 left-1 bg-[#FACC15] text-[#0F172A] text-[10px] font-bold px-1.5 py-0.5 rounded">
+                            TOP
+                          </span>
+                        )}
+                      </div>
+                      
+                      {/* Infos compactes */}
+                      <div className="p-2">
+                        <h4 className="text-xs font-bold text-[#0F172A] truncate">
+                          {vehicle.brand} {vehicle.model}
+                        </h4>
+                        <p className="text-sm font-bold text-[#FACC15] mt-0.5">
+                          {vehicle.price.toLocaleString()} CFA
+                        </p>
+                        
+                        <div className="flex items-center gap-2 mt-1.5 text-[10px] text-gray-600">
+                          <span className="flex items-center gap-0.5">
+                            <Calendar className="w-3 h-3" />
+                            {vehicle.year}
+                          </span>
+                          <span className="flex items-center gap-0.5">
+                            <Gauge className="w-3 h-3" />
+                            {(vehicle.mileage / 1000).toFixed(0)}k
+                          </span>
+                        </div>
+                        
+                        <div className="flex items-center gap-1 mt-1 text-[10px] text-gray-500">
+                          <MapPin className="w-3 h-3" />
+                          <span className="truncate">{vehicle.location}</span>
+                        </div>
+                      </div>
+                    </motion.div>
                   ))}
                 </div>
-                {mockVehicles.filter(v => {
-                  const query = searchQuery.toLowerCase();
-                  return (searchQuery && (v.brand.toLowerCase().includes(query) || v.model.toLowerCase().includes(query) || v.location.toLowerCase().includes(query))) ||
-                    (brand && brand !== 'all' && v.brand.toLowerCase() === brand) ||
-                    (minPrice && v.price >= parseInt(minPrice)) ||
-                    (maxPrice && v.price <= parseInt(maxPrice)) ||
-                    (year && year !== '2019' && v.year === parseInt(year)) ||
-                    (year === '2019' && v.year <= 2019) ||
-                    (type && v.condition === type);
-                }).length > 6 && (
-                  <div className="mt-4 text-center">
-                    <Button
-                      onClick={handleSearch}
-                      className="bg-[#FACC15] text-[#0F172A] hover:bg-[#FBBF24]"
-                    >
-                      Voir tous les résultats ({mockVehicles.length})
-                    </Button>
-                  </div>
-                )}
+
+                {/* Bouton voir plus */}
+                <div className="mt-4 text-center">
+                  <Button
+                    onClick={handleSearch}
+                    size="sm"
+                    className="bg-[#FACC15] text-[#0F172A] hover:bg-[#FBBF24]"
+                  >
+                    Voir tous les résultats
+                  </Button>
+                </div>
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
+        {/* Message si aucun résultat */}
+        {hasSearch && filteredVehicles.length === 0 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            className="mt-6 pt-6 border-t border-gray-200 text-center"
+          >
+            <p className="text-gray-500 text-sm">Aucun véhicule trouvé</p>
+          </motion.div>
+        )}
+
         {/* Quick Filters */}
-        {!showResults && (
+        {!hasSearch && (
           <div className="mt-6 pt-6 border-t border-gray-200">
             <p className="text-sm text-gray-600 mb-3 font-medium">Recherches populaires :</p>
             <div className="flex flex-wrap gap-2">
