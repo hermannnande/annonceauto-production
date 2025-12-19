@@ -82,9 +82,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     const registerData = {
       email: data.email,
       password: data.password,
-      full_name: `${data.nom} ${data.prenom}`.trim(),
-      phone: data.telephone,
-      role: 'vendor' as const,
+      nom: data.nom,
+      prenom: data.prenom,
+      telephone: data.telephone,
+      ville: data.ville,
+      role: 'vendeur' as const,
     };
 
     const response = await authService.register(registerData);
