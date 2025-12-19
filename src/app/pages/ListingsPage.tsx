@@ -8,8 +8,26 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 
+// Liste complète des marques de véhicules
+const CAR_BRANDS = [
+  'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Bugatti', 'Buick',
+  'Cadillac', 'Chevrolet', 'Chrysler', 'Citroën', 'Dacia', 'Daewoo', 'Daihatsu', 'Dodge',
+  'Ferrari', 'Fiat', 'Ford', 'Genesis', 'GMC', 'Honda', 'Hummer', 'Hyundai',
+  'Infiniti', 'Isuzu', 'Jaguar', 'Jeep', 'Kia', 'Lamborghini', 'Land Rover', 'Lexus',
+  'Lincoln', 'Lotus', 'Maserati', 'Mazda', 'McLaren', 'Mercedes-Benz', 'Mini', 'Mitsubishi',
+  'Nissan', 'Opel', 'Peugeot', 'Porsche', 'RAM', 'Renault', 'Rolls-Royce', 'Saab',
+  'Seat', 'Skoda', 'Smart', 'Subaru', 'Suzuki', 'Tesla', 'Toyota', 'Volkswagen', 'Volvo',
+  'Autre'
+].sort();
+
 export function ListingsPage() {
   const [sortBy, setSortBy] = useState('recent');
+  const [brandSearch, setBrandSearch] = useState('');
+
+  // Filtrer les marques selon la recherche
+  const filteredBrands = CAR_BRANDS.filter(brand => 
+    brand.toLowerCase().includes(brandSearch.toLowerCase())
+  );
 
   return (
     <div className="min-h-screen bg-[#F3F4F6] py-4 md:py-8 pb-24 md:pb-8">
@@ -48,11 +66,27 @@ export function ListingsPage() {
                       <SelectValue placeholder="Toutes les marques" />
                     </SelectTrigger>
                     <SelectContent>
+                      {/* Barre de recherche */}
+                      <div className="px-2 py-2 border-b">
+                        <Input
+                          placeholder="Rechercher une marque..."
+                          value={brandSearch}
+                          onChange={(e) => setBrandSearch(e.target.value)}
+                          className="h-8 text-sm"
+                          onClick={(e) => e.stopPropagation()}
+                        />
+                      </div>
                       <SelectItem value="all">Toutes les marques</SelectItem>
-                      <SelectItem value="toyota">Toyota</SelectItem>
-                      <SelectItem value="mercedes">Mercedes-Benz</SelectItem>
-                      <SelectItem value="bmw">BMW</SelectItem>
-                      <SelectItem value="ford">Ford</SelectItem>
+                      {filteredBrands.map((brand) => (
+                        <SelectItem key={brand} value={brand.toLowerCase()}>
+                          {brand}
+                        </SelectItem>
+                      ))}
+                      {filteredBrands.length === 0 && (
+                        <div className="px-2 py-4 text-sm text-gray-500 text-center">
+                          Aucune marque trouvée
+                        </div>
+                      )}
                     </SelectContent>
                   </Select>
                 </div>
