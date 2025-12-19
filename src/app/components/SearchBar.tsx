@@ -120,7 +120,7 @@ export function SearchBar() {
                             onClick={(e) => e.stopPropagation()}
                           />
                         </div>
-                        <SelectItem value="">Toutes les marques</SelectItem>
+                        <SelectItem value="all">Toutes les marques</SelectItem>
                         {filteredBrands.map((brandName) => (
                           <SelectItem key={brandName} value={brandName.toLowerCase()}>
                             {brandName}
