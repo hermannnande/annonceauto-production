@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Mail, Lock, Eye, EyeOff, LogIn, Sparkles, ArrowLeft } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, LogIn, Sparkles, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { login } from '../../services/auth.service';
 
 // Facebook Icon Component
 const FacebookIcon = ({ className }: { className?: string }) => (
@@ -24,18 +26,42 @@ const GoogleIcon = ({ className }: { className?: string }) => (
 );
 
 export function LoginPage() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [rememberMe, setRememberMe] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    console.log('Login:', { email, password, rememberMe });
+    setError('');
+    setLoading(true);
+
+    try {
+      const result = await login({ email, password });
+
+      if (result.success && result.user) {
+        // Redirection selon le rôle
+        if (result.user.role === 'admin') {
+          navigate('/dashboard/admin');
+        } else {
+          navigate('/dashboard/vendeur');
+        }
+      } else {
+        setError(result.message || 'Erreur de connexion');
+      }
+    } catch (err) {
+      setError('Une erreur est survenue. Veuillez réessayer.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSocialLogin = (provider: 'google' | 'facebook') => {
-    console.log(`Login with ${provider}`);
+    console.log(`Login with ${provider} - Bientôt disponible !`);
+    setError(`Connexion via ${provider} bientôt disponible !`);
   };
 
   // Animation variants
@@ -143,6 +169,19 @@ export function LoginPage() {
 
               {/* Login Form */}
               <form onSubmit={handleLogin} className="space-y-5">
+                {/* Error Message */}
+                {error && (
+                  <motion.div
+                    initial={{ opacity: 0, y: -10 }}
+                    animate={{ opacity: 1, y: 0 }}
+                  >
+                    <Alert variant="destructive" className="border-red-200 bg-red-50">
+                      <AlertCircle className="h-4 w-4" />
+                      <AlertDescription>{error}</AlertDescription>
+                    </Alert>
+                  </motion.div>
+                )}
+
                 {/* Email */}
                 <div className="space-y-2">
                   <label className="text-sm font-semibold text-gray-700 flex items-center gap-2">
@@ -214,13 +253,27 @@ export function LoginPage() {
                 </div>
 
                 {/* Submit Button */}
-                <motion.div whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}>
+                <motion.div whileHover={{ scale: loading ? 1 : 1.02 }} whileTap={{ scale: loading ? 1 : 0.98 }}>
                   <Button
                     type="submit"
-                    className="w-full h-12 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] hover:from-[#FBBF24] hover:to-[#F59E0B] text-[#0F172A] shadow-lg hover:shadow-xl hover:shadow-[#FACC15]/50 transition-all duration-300 font-bold group"
+                    disabled={loading}
+                    className="w-full h-12 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] hover:from-[#FBBF24] hover:to-[#F59E0B] text-[#0F172A] shadow-lg hover:shadow-xl hover:shadow-[#FACC15]/50 transition-all duration-300 font-bold group disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    <LogIn className="w-5 h-5 mr-2 group-hover:translate-x-1 transition-transform" />
-                    Se connecter
+                    {loading ? (
+                      <>
+                        <motion.div
+                          animate={{ rotate: 360 }}
+                          transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                          className="w-5 h-5 border-2 border-[#0F172A] border-t-transparent rounded-full mr-2"
+                        />
+                        Connexion...
+                      </>
+                    ) : (
+                      <>
+                        <LogIn className="w-5 h-5 mr-2 group-hover:translate-x-1 transition-transform" />
+                        Se connecter
+                      </>
+                    )}
                   </Button>
                 </motion.div>
               </form>

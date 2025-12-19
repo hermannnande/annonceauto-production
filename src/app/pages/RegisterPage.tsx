@@ -1,10 +1,12 @@
 import { useState } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
-import { Mail, Lock, Eye, EyeOff, User, Phone, UserPlus, Sparkles, ArrowLeft, CheckCircle } from 'lucide-react';
+import { Mail, Lock, Eye, EyeOff, User, Phone, UserPlus, Sparkles, ArrowLeft, CheckCircle, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
 import { Input } from '../components/ui/input';
 import { Card } from '../components/ui/card';
+import { Alert, AlertDescription } from '../components/ui/alert';
+import { register } from '../../services/auth.service';
 
 // Facebook Icon Component
 const FacebookIcon = ({ className }: { className?: string }) => (
@@ -24,6 +26,7 @@ const GoogleIcon = ({ className }: { className?: string }) => (
 );
 
 export function RegisterPage() {
+  const navigate = useNavigate();
   const [fullName, setFullName] = useState('');
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
@@ -32,22 +35,53 @@ export function RegisterPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [acceptTerms, setAcceptTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
+    setError('');
+
     if (password !== confirmPassword) {
-      alert('Les mots de passe ne correspondent pas');
+      setError('Les mots de passe ne correspondent pas');
       return;
     }
     if (!acceptTerms) {
-      alert('Veuillez accepter les conditions d\'utilisation');
+      setError('Veuillez accepter les conditions d\'utilisation');
       return;
     }
-    console.log('Register:', { fullName, email, phone, password });
+    if (password.length < 6) {
+      setError('Le mot de passe doit contenir au moins 6 caractères');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const result = await register({
+        email,
+        password,
+        full_name: fullName,
+        phone,
+        role: 'vendor'
+      });
+
+      if (result.success) {
+        // Redirection vers le dashboard vendeur
+        navigate('/dashboard/vendeur');
+      } else {
+        setError(result.message || 'Erreur lors de l\'inscription');
+      }
+    } catch (err) {
+      setError('Une erreur est survenue. Veuillez réessayer.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleSocialRegister = (provider: 'google' | 'facebook') => {
-    console.log(`Register with ${provider}`);
+    console.log(`Register with ${provider} - Bientôt disponible !`);
+    setError(`Inscription via ${provider} bientôt disponible !`);
   };
 
   // Password strength checker
