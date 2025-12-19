@@ -183,32 +183,23 @@ export function UserMenu() {
                   <span className="font-medium text-sm flex-1">Tableau de bord</span>
                 </Link>
 
-                <Link
-                  to="/dashboard/vendeur/parametres"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-blue-50 transition-colors">
-                    <User className="w-4 h-4 text-gray-600 group-hover:text-blue-600" />
-                  </div>
-                  <span className="font-medium text-sm flex-1">Mon profil</span>
-                </Link>
+                {!isAdmin && (
+                  <Link
+                    to="/dashboard/vendeur/recharge"
+                    onClick={() => setIsOpen(false)}
+                    className="flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors group"
+                  >
+                    <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-green-50 transition-colors">
+                      <CreditCard className="w-4 h-4 text-gray-600 group-hover:text-green-600" />
+                    </div>
+                    <div className="flex-1">
+                      <div className="font-medium text-sm">Recharger</div>
+                    </div>
+                  </Link>
+                )}
 
                 <Link
-                  to="/dashboard/vendeur/recharge"
-                  onClick={() => setIsOpen(false)}
-                  className="flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors group"
-                >
-                  <div className="w-8 h-8 rounded-lg bg-gray-100 flex items-center justify-center group-hover:bg-green-50 transition-colors">
-                    <CreditCard className="w-4 h-4 text-gray-600 group-hover:text-green-600" />
-                  </div>
-                  <div className="flex-1">
-                    <div className="font-medium text-sm">Recharger</div>
-                  </div>
-                </Link>
-
-                <Link
-                  to="/dashboard/vendeur/parametres"
+                  to={isAdmin ? '/dashboard/admin/settings' : '/dashboard/vendeur/settings'}
                   onClick={() => setIsOpen(false)}
                   className="flex items-center gap-3 px-3 py-2.5 text-gray-700 hover:bg-gray-50 rounded-lg transition-colors group"
                 >
