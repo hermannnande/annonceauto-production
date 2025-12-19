@@ -1,4 +1,4 @@
-﻿import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -115,7 +115,7 @@ export function VendorDashboard() {
             iconBg="from-red-400 to-red-600"
           />
           <StatCard
-            title="Annonces boostÃ©es"
+            title="Annonces boostées"
             value="3"
             icon={TrendingUp}
             iconBg="from-green-400 to-green-600"
@@ -198,15 +198,15 @@ export function VendorDashboard() {
             {/* Credit Info */}
             <div className="mt-6 p-4 bg-gradient-to-br from-[#0F172A] to-[#1e293b] rounded-xl text-white">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-sm opacity-80">CrÃ©dits disponibles</span>
+                <span className="text-sm opacity-80">Crédits disponibles</span>
                 <Zap className="w-4 h-4 text-[#FACC15]" />
               </div>
-              <div className="text-2xl font-bold mb-1">2,500 CFA</div>
+              <div className="text-2xl font-bold mb-1">{credits.toLocaleString()} CFA</div>
               <Link
                 to="/dashboard/vendeur/recharge"
                 className="text-xs text-[#FACC15] hover:text-[#FBBF24]"
               >
-                Ajouter des crÃ©dits â†’
+                Ajouter des crédits →
               </Link>
             </div>
           </Card>
@@ -216,13 +216,13 @@ export function VendorDashboard() {
         <Card className="p-6 border-0 shadow-lg">
           <div className="flex items-center justify-between mb-6">
             <h3 className="text-lg font-bold text-[#0F172A]">
-              Mes annonces rÃ©centes
+              Mes annonces récentes
             </h3>
             <Link
               to="/dashboard/vendeur/annonces"
               className="text-sm text-[#FACC15] hover:text-[#FBBF24] font-semibold"
             >
-              Voir tout â†’
+              Voir tout →
             </Link>
           </div>
 
@@ -261,7 +261,7 @@ export function VendorDashboard() {
                       ) : (
                         <span className="flex items-center gap-1 px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-semibold">
                           <XCircle className="w-3 h-3" />
-                          RefusÃ©e
+                          Refusée
                         </span>
                       )}
                     </div>

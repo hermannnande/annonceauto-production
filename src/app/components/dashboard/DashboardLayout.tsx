@@ -1,6 +1,6 @@
-﻿import { ReactNode } from 'react';
-import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { motion } from 'motion/react';
+﻿import { ReactNode, useMemo, useState } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
+import { motion } from "motion/react";
 import {
   LayoutDashboard,
   Car,
@@ -17,46 +17,51 @@ import {
   FileCheck,
   DollarSign,
   BarChart3,
-  Wallet
-} from 'lucide-react';
-import { Button } from '../ui/button';
-import { useState } from 'react';
+  Wallet,
+} from "lucide-react";
+import { Button } from "../ui/button";
+import { useAuth } from "../../../hooks/useAuth";
 
 interface DashboardLayoutProps {
   children: ReactNode;
-  userType: 'vendor' | 'admin';
+  userType: "vendor" | "admin";
 }
 
 export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const location = useLocation();
   const navigate = useNavigate();
+  const { user, logout } = useAuth();
 
-  const vendorMenuItems = [
-    { icon: LayoutDashboard, label: 'Vue d\'ensemble', path: '/dashboard/vendeur' },
-    { icon: Car, label: 'Mes annonces', path: '/dashboard/vendeur/annonces' },
-    { icon: TrendingUp, label: 'Booster', path: '/dashboard/vendeur/booster' },
-    { icon: CreditCard, label: 'Recharger', path: '/dashboard/vendeur/recharge' },
-    { icon: BarChart3, label: 'Statistiques', path: '/dashboard/vendeur/stats' },
-    { icon: Settings, label: 'ParamÃ¨tres', path: '/dashboard/vendeur/settings' },
-  ];
+  const vendorMenuItems = useMemo(() => ([
+    { icon: LayoutDashboard, label: "Vue d'ensemble", path: "/dashboard/vendeur" },
+    { icon: Car, label: "Mes annonces", path: "/dashboard/vendeur/annonces" },
+    { icon: TrendingUp, label: "Booster", path: "/dashboard/vendeur/booster" },
+    { icon: CreditCard, label: "Recharger", path: "/dashboard/vendeur/recharge" },
+    { icon: BarChart3, label: "Statistiques", path: "/dashboard/vendeur/stats" },
+    { icon: Settings, label: "ParamÃ¨tres", path: "/dashboard/vendeur/settings" },
+  ]), []);
 
-  const adminMenuItems = [
-    { icon: LayoutDashboard, label: 'Vue d\'ensemble', path: '/dashboard/admin' },
-    { icon: FileCheck, label: 'ModÃ©ration', path: '/dashboard/admin/moderation' },
-    { icon: Users, label: 'Utilisateurs', path: '/dashboard/admin/users' },
-    { icon: Wallet, label: 'CrÃ©dits', path: '/dashboard/admin/credits' },
-    { icon: DollarSign, label: 'Paiements', path: '/dashboard/admin/payments' },
-    { icon: BarChart3, label: 'Analytics', path: '/dashboard/admin/analytics' },
-    { icon: Settings, label: 'ParamÃ¨tres', path: '/dashboard/admin/settings' },
-  ];
+  const adminMenuItems = useMemo(() => ([
+    { icon: LayoutDashboard, label: "Vue d'ensemble", path: "/dashboard/admin" },
+    { icon: FileCheck, label: "ModÃ©ration", path: "/dashboard/admin/moderation" },
+    { icon: Users, label: "Utilisateurs", path: "/dashboard/admin/users" },
+    { icon: Wallet, label: "CrÃ©dits", path: "/dashboard/admin/credits" },
+    { icon: DollarSign, label: "Paiements", path: "/dashboard/admin/payments" },
+    { icon: BarChart3, label: "Analytics", path: "/dashboard/admin/analytics" },
+    { icon: Settings, label: "ParamÃ¨tres", path: "/dashboard/admin/settings" },
+  ]), []);
 
-  const menuItems = userType === 'vendor' ? vendorMenuItems : adminMenuItems;
+  const menuItems = userType === "vendor" ? vendorMenuItems : adminMenuItems;
 
   const handleLogout = () => {
-    // Logout logic here
-    navigate('/connexion');
+    logout();
+    navigate("/connexion");
   };
+
+  const displayName = user ? `${user.nom} ${user.prenom}`.trim() || user.email : userType === "admin" ? "Super Admin" : "Utilisateur";
+  const displayRole = userType === "admin" ? "Administrateur" : "Vendeur Pro";
+  const credits = user?.credits ?? 0;
 
   return (
     <div className="min-h-screen bg-[#F3F4F6]">
@@ -87,19 +92,15 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
             </button>
             <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 rounded-lg">
               <div className="w-8 h-8 bg-gradient-to-br from-[#FACC15] to-[#FBBF24] rounded-full flex items-center justify-center">
-                {userType === 'admin' ? (
+                {userType === "admin" ? (
                   <Shield className="w-4 h-4 text-[#0F172A]" />
                 ) : (
                   <User className="w-4 h-4 text-[#0F172A]" />
                 )}
               </div>
               <div className="hidden sm:block">
-                <p className="text-sm font-semibold text-[#0F172A]">
-                  {userType === 'admin' ? 'Super Admin' : 'Jean Kouassi'}
-                </p>
-                <p className="text-xs text-gray-500">
-                  {userType === 'admin' ? 'Administrateur' : 'Vendeur Pro'}
-                </p>
+                <p className="text-sm font-semibold text-[#0F172A]">{displayName}</p>
+                <p className="text-xs text-gray-500">{displayRole}</p>
               </div>
             </div>
           </div>
@@ -109,7 +110,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
       {/* Sidebar */}
       <aside
         className={`fixed top-16 left-0 bottom-0 w-64 bg-white border-r border-gray-200 z-20 transition-transform duration-300 ${
-          sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+          sidebarOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"
         }`}
       >
         <nav className="p-4 space-y-2">
@@ -122,11 +123,11 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
                 onClick={() => setSidebarOpen(false)}
                 className={`flex items-center gap-3 px-4 py-3 rounded-xl transition-all duration-200 group ${
                   isActive
-                    ? 'bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] shadow-lg'
-                    : 'text-gray-600 hover:bg-gray-100'
+                    ? "bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] shadow-lg"
+                    : "text-gray-600 hover:bg-gray-100"
                 }`}
               >
-                <item.icon className={`w-5 h-5 ${isActive ? '' : 'group-hover:scale-110 transition-transform'}`} />
+                <item.icon className={`w-5 h-5 ${isActive ? "" : "group-hover:scale-110 transition-transform"}`} />
                 <span className="font-semibold">{item.label}</span>
               </Link>
             );
@@ -143,14 +144,14 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
         </nav>
 
         {/* Credits Display (for vendors) */}
-        {userType === 'vendor' && (
+        {userType === "vendor" && (
           <div className="absolute bottom-4 left-4 right-4">
             <div className="bg-gradient-to-br from-[#0F172A] to-[#1e293b] rounded-xl p-4 text-white">
               <div className="flex items-center gap-2 mb-2">
                 <Wallet className="w-4 h-4" />
                 <span className="text-sm opacity-80">Mes crÃ©dits</span>
               </div>
-              <div className="text-2xl font-bold">2,500 CFA</div>
+              <div className="text-2xl font-bold">{credits.toLocaleString()} CFA</div>
               <Link
                 to="/dashboard/vendeur/recharge"
                 className="text-xs text-[#FACC15] hover:text-[#FBBF24] mt-2 inline-block"
