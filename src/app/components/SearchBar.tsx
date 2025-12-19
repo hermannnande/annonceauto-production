@@ -12,11 +12,10 @@ export function SearchBar() {
   const [maxPrice, setMaxPrice] = useState('');
   const [year, setYear] = useState('');
   const [type, setType] = useState('');
-  const [city, setCity] = useState('');
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   const handleSearch = () => {
-    console.log('Search params:', { brand, model, minPrice, maxPrice, year, type, city });
+    console.log('Search params:', { brand, model, minPrice, maxPrice, year, type });
   };
 
   return (
@@ -81,7 +80,7 @@ export function SearchBar() {
               className="overflow-hidden"
             >
               <div className="pt-6 mt-6 border-t border-gray-200">
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                   {/* Marque */}
                   <div className="space-y-2">
                     <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
@@ -177,27 +176,6 @@ export function SearchBar() {
                       <SelectContent>
                         <SelectItem value="neuf">Neuf</SelectItem>
                         <SelectItem value="occasion">Occasion</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
-                  {/* Ville */}
-                  <div className="space-y-2">
-                    <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
-                      <span className="w-2 h-2 bg-[#FACC15] rounded-full" />
-                      Localisation
-                    </label>
-                    <Select value={city} onValueChange={setCity}>
-                      <SelectTrigger className="border-2 border-gray-200 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors bg-white/50 backdrop-blur-sm">
-                        <SelectValue placeholder="Toutes les villes" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="cocody">Abidjan, Cocody</SelectItem>
-                        <SelectItem value="plateau">Abidjan, Plateau</SelectItem>
-                        <SelectItem value="marcory">Abidjan, Marcory</SelectItem>
-                        <SelectItem value="yopougon">Abidjan, Yopougon</SelectItem>
-                        <SelectItem value="adjame">Abidjan, Adjamé</SelectItem>
-                        <SelectItem value="riviera">Abidjan, Riviera</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
