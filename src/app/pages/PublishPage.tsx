@@ -507,19 +507,15 @@ export function PublishPage() {
                         <MapPin className="w-4 h-4 text-[#FACC15]" />
                         Localisation *
                       </Label>
-                      <Select value={formData.location} onValueChange={(value) => updateFormData('location', value)}>
-                        <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
-                          <SelectValue placeholder="Où se trouve le véhicule ?" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          <SelectItem value="cocody">Abidjan, Cocody</SelectItem>
-                          <SelectItem value="plateau">Abidjan, Plateau</SelectItem>
-                          <SelectItem value="marcory">Abidjan, Marcory</SelectItem>
-                          <SelectItem value="yopougon">Abidjan, Yopougon</SelectItem>
-                          <SelectItem value="adjame">Abidjan, Adjamé</SelectItem>
-                          <SelectItem value="riviera">Abidjan, Riviera</SelectItem>
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        placeholder="Ex: Abidjan, Cocody - Riviera 3"
+                        value={formData.location}
+                        onChange={(e) => updateFormData('location', e.target.value)}
+                        className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12"
+                      />
+                      <p className="text-sm text-gray-500">
+                        Indiquez la ville et le quartier où se trouve le véhicule
+                      </p>
                     </div>
 
                     <div className="space-y-2">
