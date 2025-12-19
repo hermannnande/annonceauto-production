@@ -84,6 +84,7 @@ export default function App() {
         {/* Vendor Dashboard routes (no header/footer, DashboardLayout handles nav) */}
         <Route path="/dashboard/vendeur" element={<VendorDashboard />} />
         <Route path="/dashboard/vendeur/annonces" element={<VendorListings />} />
+        <Route path="/dashboard/vendeur/annonces/nouvelle" element={<PublishPage />} />
         <Route path="/dashboard/vendeur/recharge" element={<VendorRecharge />} />
         <Route path="/dashboard/vendeur/booster" element={<VendorBooster />} />
         <Route path="/dashboard/vendeur/stats" element={<VendorStats />} />
