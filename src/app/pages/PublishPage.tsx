@@ -113,7 +113,42 @@ export function PublishPage() {
     brand.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
+  // Validation par step
+  const isStepValid = (step: number): boolean => {
+    switch (step) {
+      case 0: // Step 1: Informations du véhicule
+        return !!(
+          formData.brand &&
+          (formData.brand !== 'autre' || formData.customBrand) &&
+          formData.year &&
+          formData.condition
+        );
+      case 1: // Step 2: Détails techniques
+        return !!(
+          formData.mileage &&
+          formData.transmission &&
+          formData.fuel &&
+          formData.color
+        );
+      case 2: // Step 3: Prix & Localisation
+        return !!(
+          formData.price &&
+          formData.location &&
+          formData.description &&
+          formData.description.length >= 10
+        );
+      case 3: // Step 4: Images
+        return formData.images.length > 0;
+      default:
+        return false;
+    }
+  };
+
   const nextStep = () => {
+    if (!isStepValid(currentStep)) {
+      alert('Veuillez remplir tous les champs obligatoires avant de continuer.');
+      return;
+    }
     if (currentStep < steps.length - 1) {
       setCurrentStep(currentStep + 1);
     }
@@ -287,7 +322,7 @@ export function PublishPage() {
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <span className="w-2 h-2 bg-[#FACC15] rounded-full" />
-                        Modèle *
+                        Modèle
                       </Label>
                       <Input
                         placeholder="Ex: Camry, Série 5..."
@@ -307,7 +342,7 @@ export function PublishPage() {
                           <SelectValue placeholder="Année du véhicule" />
                         </SelectTrigger>
                         <SelectContent>
-                          {Array.from({ length: 25 }, (_, i) => 2025 - i).map(year => (
+                          {Array.from({ length: 28 }, (_, i) => 2025 - i).map(year => (
                             <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
                           ))}
                         </SelectContent>
@@ -411,7 +446,7 @@ export function PublishPage() {
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <Car className="w-4 h-4 text-[#FACC15]" />
-                        Nombre de portes *
+                        Nombre de portes
                       </Label>
                       <Select value={formData.doors} onValueChange={(value) => updateFormData('doors', value)}>
                         <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
@@ -530,7 +565,7 @@ export function PublishPage() {
                         className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors min-h-[150px] resize-none"
                       />
                       <p className="text-sm text-gray-500">
-                        {formData.description.length} / 1000 caractères
+                        {formData.description.length} / 1000 caractères (minimum 10)
                       </p>
                     </div>
                   </div>
