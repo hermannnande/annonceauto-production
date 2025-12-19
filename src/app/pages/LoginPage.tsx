@@ -1,5 +1,5 @@
 import { useState, FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, LogIn, Sparkles, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -32,7 +32,11 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { login } = useAuth();
+  
+  // Récupérer le paramètre de redirection
+  const redirectPath = searchParams.get('redirect') || null;
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -41,12 +45,18 @@ export function LoginPage() {
 
     try {
       await login(email, password);
-      // Récupérer l'utilisateur pour savoir où rediriger
-      const userData = JSON.parse(localStorage.getItem('user') || '{}');
-      if (userData.role === 'admin') {
-        navigate('/dashboard/admin');
+      
+      // Si un paramètre de redirection existe, rediriger vers cette page
+      if (redirectPath) {
+        navigate(redirectPath);
       } else {
-        navigate('/dashboard/vendeur');
+        // Sinon, redirection normale selon le rôle
+        const userData = JSON.parse(localStorage.getItem('user') || '{}');
+        if (userData.role === 'admin') {
+          navigate('/dashboard/admin');
+        } else {
+          navigate('/dashboard/vendeur');
+        }
       }
     } catch (err: any) {
       setError(err.message || 'Email ou mot de passe incorrect');
@@ -124,6 +134,20 @@ export function LoginPage() {
                   Bienvenue ! Connectez-vous à votre compte
                 </p>
               </div>
+
+              {/* Info Message si redirection */}
+              {redirectPath && (
+                <motion.div
+                  initial={{ opacity: 0, y: -10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="bg-[#FACC15]/10 border border-[#FACC15]/30 text-[#0F172A] px-4 py-3 rounded-xl flex items-center gap-2 mb-6"
+                >
+                  <AlertCircle className="w-5 h-5 text-[#FACC15]" />
+                  <p className="text-sm">
+                    Vous devez être connecté pour publier une annonce
+                  </p>
+                </motion.div>
+              )}
 
               {/* Error Message */}
               {error && (

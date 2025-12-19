@@ -1,5 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   ArrowLeft,
@@ -25,6 +26,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../components/ui/textarea';
 import { Card } from '../components/ui/card';
 import { ImageUpload } from '../components/ImageUpload';
+import { useAuth } from '../../hooks/useAuth';
 
 // Liste complète des marques de véhicules
 const CAR_BRANDS = [
@@ -39,6 +41,8 @@ const CAR_BRANDS = [
 ].sort();
 
 export function PublishPage() {
+  const { user } = useAuth();
+  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [brandSearch, setBrandSearch] = useState('');
   const [showOtherBrand, setShowOtherBrand] = useState(false);
@@ -97,6 +101,14 @@ export function PublishPage() {
       gradient: 'from-orange-500 to-yellow-500'
     }
   ];
+
+  // Vérifier si l'utilisateur est connecté
+  useEffect(() => {
+    if (!user) {
+      // Rediriger vers la page de connexion avec un paramètre de redirection
+      navigate('/connexion?redirect=/publier');
+    }
+  }, [user, navigate]);
 
   const updateFormData = (field: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
@@ -173,6 +185,22 @@ export function PublishPage() {
     console.log('Form submitted:', formData);
     // Handle form submission
   };
+
+  // Afficher un loader pendant la vérification de connexion
+  if (!user) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center">
+        <div className="text-center">
+          <motion.div
+            animate={{ rotate: 360 }}
+            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+            className="w-16 h-16 border-4 border-[#FACC15] border-t-transparent rounded-full mx-auto mb-4"
+          />
+          <p className="text-gray-600">Vérification de la connexion...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12">
