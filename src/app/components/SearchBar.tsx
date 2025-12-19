@@ -28,8 +28,8 @@ export function SearchBar() {
   const [showAdvanced, setShowAdvanced] = useState(false);
 
   // Filtrer les marques selon la recherche
-  const filteredBrands = CAR_BRANDS.filter(brand => 
-    brand.toLowerCase().includes(brandSearch.toLowerCase())
+  const filteredBrands = CAR_BRANDS.filter(b => 
+    b.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
   const handleSearch = () => {
@@ -121,9 +121,9 @@ export function SearchBar() {
                           />
                         </div>
                         <SelectItem value="">Toutes les marques</SelectItem>
-                        {filteredBrands.map((brand) => (
-                          <SelectItem key={brand} value={brand.toLowerCase()}>
-                            {brand}
+                        {filteredBrands.map((brandName) => (
+                          <SelectItem key={brandName} value={brandName.toLowerCase()}>
+                            {brandName}
                           </SelectItem>
                         ))}
                         {filteredBrands.length === 0 && (

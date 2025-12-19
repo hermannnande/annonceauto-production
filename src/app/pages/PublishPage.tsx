@@ -109,8 +109,8 @@ export function PublishPage() {
   };
 
   // Filtrer les marques selon la recherche
-  const filteredBrands = CAR_BRANDS.filter(brand => 
-    brand.toLowerCase().includes(brandSearch.toLowerCase())
+  const filteredBrands = CAR_BRANDS.filter(b => 
+    b.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
   // Validation par step
@@ -289,9 +289,9 @@ export function PublishPage() {
                               onClick={(e) => e.stopPropagation()}
                             />
                           </div>
-                          {filteredBrands.map((brand) => (
-                            <SelectItem key={brand} value={brand.toLowerCase()}>
-                              {brand}
+                          {filteredBrands.map((brandName) => (
+                            <SelectItem key={brandName} value={brandName.toLowerCase()}>
+                              {brandName}
                             </SelectItem>
                           ))}
                           {filteredBrands.length === 0 && (
