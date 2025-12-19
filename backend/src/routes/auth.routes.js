@@ -57,12 +57,13 @@ router.post('/register', [
       user: {
         id: user.id,
         email: user.email,
-        nom: user.nom,
-        prenom: user.prenom,
-        telephone: user.telephone,
-        ville: user.ville,
+        full_name: `${user.nom} ${user.prenom}`,
+        phone: user.telephone,
         role: user.role,
-        credits: user.credits
+        credits: user.credits,
+        profile_image: user.avatar_url,
+        is_verified: user.verified,
+        is_active: true
       }
     });
   } catch (error) {
@@ -110,13 +111,13 @@ router.post('/login', [
       user: {
         id: user.id,
         email: user.email,
-        nom: user.nom,
-        prenom: user.prenom,
-        telephone: user.telephone,
-        ville: user.ville,
+        full_name: `${user.nom} ${user.prenom}`,
+        phone: user.telephone,
         role: user.role,
         credits: user.credits,
-        avatar_url: user.avatar_url
+        profile_image: user.avatar_url,
+        is_verified: user.verified,
+        is_active: true
       }
     });
   } catch (error) {
@@ -145,7 +146,21 @@ router.get('/me', async (req, res) => {
       return res.status(404).json({ error: 'Utilisateur non trouvé' });
     }
 
-    res.json({ user: result.rows[0] });
+    const user = result.rows[0];
+    
+    res.json({ 
+      user: {
+        id: user.id,
+        email: user.email,
+        full_name: `${user.nom} ${user.prenom}`,
+        phone: user.telephone,
+        role: user.role,
+        credits: user.credits,
+        profile_image: user.avatar_url,
+        is_verified: user.verified,
+        is_active: true
+      }
+    });
   } catch (error) {
     console.error('Erreur profil:', error);
     res.status(401).json({ error: 'Token invalide' });
@@ -178,5 +193,6 @@ router.post('/refresh', async (req, res) => {
 });
 
 export default router;
+
 
 
