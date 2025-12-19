@@ -17,7 +17,8 @@ export const API_ENDPOINTS = {
   auth: {
     register: `${API_BASE_URL}/api/auth/register`,
     login: `${API_BASE_URL}/api/auth/login`,
-    profile: `${API_BASE_URL}/api/auth/profile`,
+    profile: `${API_BASE_URL}/api/auth/me`,
+    me: `${API_BASE_URL}/api/auth/me`,
   },
   
   // Véhicules
@@ -95,4 +96,5 @@ export const handleApiError = (error: any) => {
 };
 
 export default API_BASE_URL;
+
 
