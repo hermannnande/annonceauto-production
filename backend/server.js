@@ -21,18 +21,11 @@ const PORT = process.env.PORT || 5000;
 // Middleware de sécurité
 app.use(helmet());
 
-// CORS - Autoriser le frontend
-const corsOptions = {
-  origin: [
-    process.env.FRONTEND_URL,
-    process.env.FRONTEND_LOCAL_URL,
-    'http://localhost:5173',
-    'http://localhost:3000'
-  ],
-  credentials: true,
-  optionsSuccessStatus: 200
-};
-app.use(cors(corsOptions));
+// CORS - Autoriser toutes les origines (temporaire pour debug)
+app.use(cors({
+  origin: '*',
+  credentials: true
+}));
 
 // Rate limiting - Protection contre les attaques
 const limiter = rateLimit({
@@ -74,6 +67,25 @@ app.get('/', (req, res) => {
 // Route de santé
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
+});
+
+// Route de test de la base de données
+app.get('/api/test-db', async (req, res) => {
+  try {
+    const { query } = await import('./src/config/database.js');
+    const result = await query('SELECT COUNT(*) as count FROM users');
+    res.json({ 
+      success: true, 
+      message: 'Base de données OK',
+      users_count: result.rows[0].count 
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      success: false, 
+      error: error.message,
+      stack: error.stack
+    });
+  }
 });
 
 // Gestion des erreurs 404
