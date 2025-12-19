@@ -26,11 +26,26 @@ import { Textarea } from '../components/ui/textarea';
 import { Card } from '../components/ui/card';
 import { ImageUpload } from '../components/ImageUpload';
 
+// Liste complète des marques de véhicules
+const CAR_BRANDS = [
+  'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Bugatti', 'Buick',
+  'Cadillac', 'Chevrolet', 'Chrysler', 'Citroën', 'Dacia', 'Daewoo', 'Daihatsu', 'Dodge',
+  'Ferrari', 'Fiat', 'Ford', 'Genesis', 'GMC', 'Honda', 'Hummer', 'Hyundai',
+  'Infiniti', 'Isuzu', 'Jaguar', 'Jeep', 'Kia', 'Lamborghini', 'Land Rover', 'Lexus',
+  'Lincoln', 'Lotus', 'Maserati', 'Mazda', 'McLaren', 'Mercedes-Benz', 'Mini', 'Mitsubishi',
+  'Nissan', 'Opel', 'Peugeot', 'Porsche', 'RAM', 'Renault', 'Rolls-Royce', 'Saab',
+  'Seat', 'Skoda', 'Smart', 'Subaru', 'Suzuki', 'Tesla', 'Toyota', 'Volkswagen', 'Volvo',
+  'Autre'
+].sort();
+
 export function PublishPage() {
   const [currentStep, setCurrentStep] = useState(0);
+  const [brandSearch, setBrandSearch] = useState('');
+  const [showOtherBrand, setShowOtherBrand] = useState(false);
   const [formData, setFormData] = useState({
     // Step 1: Vehicle Info
     brand: '',
+    customBrand: '',
     model: '',
     year: '',
     condition: '',
@@ -84,7 +99,19 @@ export function PublishPage() {
 
   const updateFormData = (field: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    
+    // Si "Autre" est sélectionné, afficher le champ personnalisé
+    if (field === 'brand' && value === 'Autre') {
+      setShowOtherBrand(true);
+    } else if (field === 'brand') {
+      setShowOtherBrand(false);
+    }
   };
+
+  // Filtrer les marques selon la recherche
+  const filteredBrands = CAR_BRANDS.filter(brand => 
+    brand.toLowerCase().includes(brandSearch.toLowerCase())
+  );
 
   const nextStep = () => {
     if (currentStep < steps.length - 1) {
@@ -209,21 +236,52 @@ export function PublishPage() {
                         <span className="w-2 h-2 bg-[#FACC15] rounded-full" />
                         Marque *
                       </Label>
-                      <Select value={formData.brand} onValueChange={(value) => updateFormData('brand', value)}>
+                      <Select 
+                        value={formData.brand} 
+                        onValueChange={(value) => updateFormData('brand', value)}
+                      >
                         <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
                           <SelectValue placeholder="Sélectionnez la marque" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="toyota">Toyota</SelectItem>
-                          <SelectItem value="mercedes">Mercedes-Benz</SelectItem>
-                          <SelectItem value="bmw">BMW</SelectItem>
-                          <SelectItem value="ford">Ford</SelectItem>
-                          <SelectItem value="honda">Honda</SelectItem>
-                          <SelectItem value="nissan">Nissan</SelectItem>
-                          <SelectItem value="volkswagen">Volkswagen</SelectItem>
-                          <SelectItem value="peugeot">Peugeot</SelectItem>
+                          {/* Barre de recherche */}
+                          <div className="px-2 py-2 border-b">
+                            <Input
+                              placeholder="Rechercher une marque..."
+                              value={brandSearch}
+                              onChange={(e) => setBrandSearch(e.target.value)}
+                              className="h-8 text-sm"
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          </div>
+                          {filteredBrands.map((brand) => (
+                            <SelectItem key={brand} value={brand.toLowerCase()}>
+                              {brand}
+                            </SelectItem>
+                          ))}
+                          {filteredBrands.length === 0 && (
+                            <div className="px-2 py-4 text-sm text-gray-500 text-center">
+                              Aucune marque trouvée
+                            </div>
+                          )}
                         </SelectContent>
                       </Select>
+                      
+                      {/* Champ personnalisé si "Autre" sélectionné */}
+                      {showOtherBrand && (
+                        <motion.div
+                          initial={{ opacity: 0, height: 0 }}
+                          animate={{ opacity: 1, height: 'auto' }}
+                          className="mt-2"
+                        >
+                          <Input
+                            placeholder="Entrez le nom de la marque"
+                            value={formData.customBrand}
+                            onChange={(e) => updateFormData('customBrand', e.target.value)}
+                            className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12"
+                          />
+                        </motion.div>
+                      )}
                     </div>
 
                     <div className="space-y-2">
