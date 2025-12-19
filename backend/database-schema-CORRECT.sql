@@ -117,3 +117,4 @@ INSERT INTO users (email, password, nom, prenom, telephone, role, credits, verif
 ('vendeur@test.ci', '$2b$10$YixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW', 'Koné', 'Yao', '+2250101010101', 'vendeur', 50, true)
 ON CONFLICT (email) DO NOTHING;
 
+

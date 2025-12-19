@@ -255,3 +255,4 @@ async function initiateMobileMoneyPayment(methode, telephone, montant, transacti
 export default router;
 
 
+
