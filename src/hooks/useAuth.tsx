@@ -1,4 +1,4 @@
-import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+﻿import { createContext, useContext, useState, useEffect, ReactNode } from 'react';
 import * as authService from '../services/auth.service';
 
 interface User {
@@ -31,7 +31,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Charger l'utilisateur depuis le localStorage au démarrage
+  // Charger l'utilisateur depuis le localStorage au dÃ©marrage
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
@@ -41,7 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         setToken(storedToken);
         setUser(JSON.parse(storedUser));
       } catch (error) {
-        console.error('Erreur lors du chargement de l\'utilisateur:', error);
+        console.error("Erreur lors du chargement de l'utilisateur:", error);
         localStorage.removeItem('token');
         localStorage.removeItem('user');
       }
@@ -51,13 +51,12 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     const response = await authService.login({ email, password });
-    
+
     if (!response.success || !response.token || !response.user) {
       throw new Error(response.message || 'Erreur de connexion');
     }
-    
-    // Mapper les données de l'API vers notre format
-    const user: User = {
+
+    const mappedUser: User = {
       id: response.user.id,
       email: response.user.email,
       nom: response.user.full_name.split(' ')[0] || '',
@@ -66,32 +65,31 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: response.user.role === 'admin' ? 'admin' : 'vendeur',
       credits: response.user.credits,
       avatar_url: response.user.profile_image,
-      verified: response.user.is_verified
+      verified: response.user.is_verified,
     };
-    
+
     setToken(response.token);
-    setUser(user);
+    setUser(mappedUser);
     localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('user', JSON.stringify(mappedUser));
   };
 
   const register = async (data: any) => {
     const registerData = {
       email: data.email,
       password: data.password,
-      full_name: `${data.nom} ${data.prenom}`,
+      full_name: ${data.nom} ,
       phone: data.telephone,
-      role: 'vendor' as const
+      role: 'vendor' as const,
     };
-    
+
     const response = await authService.register(registerData);
-    
+
     if (!response.success || !response.token || !response.user) {
-      throw new Error(response.message || 'Erreur lors de l\'inscription');
+      throw new Error(response.message || "Erreur lors de l'inscription");
     }
-    
-    // Mapper les données de l'API vers notre format
-    const user: User = {
+
+    const mappedUser: User = {
       id: response.user.id,
       email: response.user.email,
       nom: data.nom,
@@ -101,13 +99,13 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       role: response.user.role === 'admin' ? 'admin' : 'vendeur',
       credits: response.user.credits,
       avatar_url: response.user.profile_image,
-      verified: response.user.is_verified
+      verified: response.user.is_verified,
     };
-    
+
     setToken(response.token);
-    setUser(user);
+    setUser(mappedUser);
     localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(user));
+    localStorage.setItem('user', JSON.stringify(mappedUser));
   };
 
   const logout = () => {
@@ -135,8 +133,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth doit être utilisé à l\'intérieur d\'un AuthProvider');
+    throw new Error("useAuth doit Ãªtre utilisÃ© Ã  l'intÃ©rieur d'un AuthProvider");
   }
   return context;
 }
-
