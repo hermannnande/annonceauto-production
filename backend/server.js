@@ -106,10 +106,20 @@ app.use((err, req, res, next) => {
 });
 
 // Démarrer le serveur
-app.listen(PORT, () => {
+app.listen(PORT, async () => {
   console.log(`🚀 Serveur démarré sur le port ${PORT}`);
   console.log(`📍 http://localhost:${PORT}`);
   console.log(`🌍 Environnement: ${process.env.NODE_ENV}`);
+  
+  // Test de connexion à la base de données
+  try {
+    const { query } = await import('./src/config/database.js');
+    await query('SELECT NOW()');
+    console.log('✅ Base de données connectée !');
+  } catch (error) {
+    console.error('❌ Erreur de connexion à la base de données:', error.message);
+    console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'définie' : 'NON définie');
+  }
 });
 
 export default app;
