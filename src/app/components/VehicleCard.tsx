@@ -44,8 +44,8 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
         <div className="absolute inset-0 bg-gradient-to-br from-[#FACC15]/0 via-[#FACC15]/0 to-[#FACC15]/10 opacity-0 group-hover:opacity-100 transition-opacity duration-500 pointer-events-none z-10" />
         
         <Link to={`/annonces/${vehicle.id}`} className="flex flex-col h-full">
-          {/* Image Container */}
-          <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
+          {/* Image Container - RESPONSIVE HEIGHT */}
+          <div className="relative aspect-[4/3] md:aspect-[4/3] overflow-hidden bg-gray-100 h-32 md:h-auto">
             {/* Image */}
             <motion.img
               whileHover={{ scale: 1.1 }}
@@ -58,20 +58,20 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
             {/* Gradient Overlay on Image */}
             <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
 
-            {/* Badges */}
-            <div className="absolute top-4 left-4 flex flex-col gap-2 z-20">
-              <Badge className={`${getConditionColor(vehicle.condition)} backdrop-blur-sm font-medium px-3 py-1`}>
+            {/* Badges - SMALLER ON MOBILE */}
+            <div className="absolute top-1 left-1 md:top-4 md:left-4 flex flex-col gap-1 md:gap-2 z-20">
+              <Badge className={`${getConditionColor(vehicle.condition)} backdrop-blur-sm font-medium px-1.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-sm`}>
                 {vehicle.condition}
               </Badge>
               {vehicle.badge && (
-                <Badge className={`${getBadgeColor(vehicle.badge)} backdrop-blur-sm font-medium px-3 py-1 animate-pulse`}>
+                <Badge className={`${getBadgeColor(vehicle.badge)} backdrop-blur-sm font-medium px-1.5 py-0.5 md:px-3 md:py-1 text-[10px] md:text-sm animate-pulse`}>
                   {vehicle.badge}
                 </Badge>
               )}
             </div>
 
-            {/* Quick Actions - Appear on Hover */}
-            <div className="absolute top-4 right-4 flex flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20">
+            {/* Quick Actions - HIDDEN ON MOBILE */}
+            <div className="hidden md:flex absolute top-4 right-4 flex-col gap-2 opacity-0 group-hover:opacity-100 transition-all duration-300 z-20">
               <motion.button
                 whileHover={{ scale: 1.1 }}
                 whileTap={{ scale: 0.9 }}
@@ -88,80 +88,80 @@ export function VehicleCard({ vehicle }: VehicleCardProps) {
               </motion.button>
             </div>
 
-            {/* View Count Badge */}
-            <div className="absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs flex items-center gap-1">
+            {/* View Count Badge - HIDDEN ON MOBILE */}
+            <div className="hidden md:flex absolute bottom-4 right-4 bg-black/60 backdrop-blur-sm text-white px-3 py-1 rounded-full text-xs items-center gap-1">
               <Eye className="w-3 h-3" />
               <span>{Math.floor(Math.random() * 500) + 100} vues</span>
             </div>
           </div>
 
-          {/* Content */}
-          <div className="p-6 flex-1 flex flex-col relative z-10">
-            {/* Title */}
-            <h3 className="text-xl mb-3 font-[var(--font-poppins)] font-bold text-[#0F172A] group-hover:text-[#FACC15] transition-colors line-clamp-1">
+          {/* Content - ULTRA COMPACT ON MOBILE */}
+          <div className="p-2 md:p-6 flex-1 flex flex-col relative z-10">
+            {/* Title - SMALLER ON MOBILE */}
+            <h3 className="text-sm md:text-xl mb-1 md:mb-3 font-[var(--font-poppins)] font-bold text-[#0F172A] group-hover:text-[#FACC15] transition-colors line-clamp-1">
               {vehicle.brand} {vehicle.model}
             </h3>
 
-            {/* Price with gradient effect */}
-            <div className="mb-6">
-              <p className="text-2xl md:text-3xl font-bold bg-gradient-to-r from-[#FACC15] to-[#FBBF24] bg-clip-text text-transparent font-[var(--font-poppins)]">
+            {/* Price - SMALLER ON MOBILE */}
+            <div className="mb-2 md:mb-6">
+              <p className="text-base md:text-2xl lg:text-3xl font-bold bg-gradient-to-r from-[#FACC15] to-[#FBBF24] bg-clip-text text-transparent font-[var(--font-poppins)]">
                 {formatPrice(vehicle.price)}
               </p>
             </div>
 
-            {/* Details Grid */}
-            <div className="grid grid-cols-2 gap-3 text-sm text-gray-600 mb-6 flex-1">
-              <div className="flex items-center gap-2 group/item">
-                <div className="w-8 h-8 bg-[#F3F4F6] rounded-lg flex items-center justify-center group-hover/item:bg-[#FACC15]/10 transition-colors">
-                  <Calendar className="w-4 h-4 text-[#FACC15]" />
+            {/* Details Grid - COMPACT ON MOBILE */}
+            <div className="grid grid-cols-2 gap-1.5 md:gap-3 text-[10px] md:text-sm text-gray-600 mb-2 md:mb-6 flex-1">
+              <div className="flex items-center gap-1 md:gap-2 group/item">
+                <div className="w-5 h-5 md:w-8 md:h-8 bg-[#F3F4F6] rounded-md md:rounded-lg flex items-center justify-center group-hover/item:bg-[#FACC15]/10 transition-colors">
+                  <Calendar className="w-3 h-3 md:w-4 md:h-4 text-[#FACC15]" />
                 </div>
                 <span className="font-medium">{vehicle.year}</span>
               </div>
               
-              <div className="flex items-center gap-2 group/item">
-                <div className="w-8 h-8 bg-[#F3F4F6] rounded-lg flex items-center justify-center group-hover/item:bg-[#FACC15]/10 transition-colors">
-                  <Gauge className="w-4 h-4 text-[#FACC15]" />
+              <div className="flex items-center gap-1 md:gap-2 group/item">
+                <div className="w-5 h-5 md:w-8 md:h-8 bg-[#F3F4F6] rounded-md md:rounded-lg flex items-center justify-center group-hover/item:bg-[#FACC15]/10 transition-colors">
+                  <Gauge className="w-3 h-3 md:w-4 md:h-4 text-[#FACC15]" />
                 </div>
-                <span className="font-medium">{vehicle.mileage.toLocaleString('fr-FR')} km</span>
+                <span className="font-medium truncate">{(vehicle.mileage / 1000).toFixed(0)}k km</span>
               </div>
               
-              <div className="flex items-center gap-2 group/item">
-                <div className="w-8 h-8 bg-[#F3F4F6] rounded-lg flex items-center justify-center group-hover/item:bg-[#FACC15]/10 transition-colors">
-                  <Settings className="w-4 h-4 text-[#FACC15]" />
+              <div className="flex items-center gap-1 md:gap-2 group/item">
+                <div className="w-5 h-5 md:w-8 md:h-8 bg-[#F3F4F6] rounded-md md:rounded-lg flex items-center justify-center group-hover/item:bg-[#FACC15]/10 transition-colors">
+                  <Settings className="w-3 h-3 md:w-4 md:h-4 text-[#FACC15]" />
                 </div>
-                <span className="font-medium">{vehicle.transmission}</span>
+                <span className="font-medium truncate">{vehicle.transmission}</span>
               </div>
               
-              <div className="flex items-center gap-2 group/item">
-                <div className="w-8 h-8 bg-[#F3F4F6] rounded-lg flex items-center justify-center group-hover/item:bg-[#FACC15]/10 transition-colors">
-                  <Fuel className="w-4 h-4 text-[#FACC15]" />
+              <div className="flex items-center gap-1 md:gap-2 group/item">
+                <div className="w-5 h-5 md:w-8 md:h-8 bg-[#F3F4F6] rounded-md md:rounded-lg flex items-center justify-center group-hover/item:bg-[#FACC15]/10 transition-colors">
+                  <Fuel className="w-3 h-3 md:w-4 md:h-4 text-[#FACC15]" />
                 </div>
-                <span className="font-medium">{vehicle.fuel}</span>
+                <span className="font-medium truncate">{vehicle.fuel}</span>
               </div>
             </div>
 
-            {/* Location */}
-            <div className="flex items-center gap-2 text-sm text-gray-500 mb-6 pb-6 border-b border-gray-100">
-              <MapPin className="w-4 h-4 text-[#FACC15]" />
-              <span>{vehicle.location}</span>
+            {/* Location - SMALLER ON MOBILE */}
+            <div className="flex items-center gap-1 md:gap-2 text-[10px] md:text-sm text-gray-500 mb-2 md:mb-6 pb-2 md:pb-6 border-b border-gray-100">
+              <MapPin className="w-3 h-3 md:w-4 md:h-4 text-[#FACC15]" />
+              <span className="truncate">{vehicle.location}</span>
             </div>
 
-            {/* CTA Button */}
+            {/* CTA Button - SMALLER ON MOBILE */}
             <motion.button
               whileHover={{ scale: 1.02 }}
               whileTap={{ scale: 0.98 }}
-              className="w-full bg-gradient-to-r from-[#0F172A] to-[#1e293b] text-white py-3 rounded-xl font-medium hover:from-[#FACC15] hover:to-[#FBBF24] hover:text-[#0F172A] transition-all duration-300 shadow-lg hover:shadow-xl group/btn"
+              className="w-full bg-gradient-to-r from-[#0F172A] to-[#1e293b] text-white py-1.5 md:py-3 rounded-lg md:rounded-xl text-xs md:text-base font-medium hover:from-[#FACC15] hover:to-[#FBBF24] hover:text-[#0F172A] transition-all duration-300 shadow-lg hover:shadow-xl group/btn"
             >
-              <span className="flex items-center justify-center gap-2">
-                Voir l'annonce
-                <Eye className="w-4 h-4 group-hover/btn:translate-x-1 transition-transform" />
+              <span className="flex items-center justify-center gap-1 md:gap-2">
+                Voir
+                <Eye className="w-3 h-3 md:w-4 md:h-4 group-hover/btn:translate-x-1 transition-transform" />
               </span>
             </motion.button>
           </div>
         </Link>
 
         {/* Bottom Accent Line */}
-        <div className="h-1 bg-gradient-to-r from-transparent via-[#FACC15] to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
+        <div className="h-0.5 md:h-1 bg-gradient-to-r from-transparent via-[#FACC15] to-transparent transform scale-x-0 group-hover:scale-x-100 transition-transform duration-500" />
       </Card>
     </motion.div>
   );

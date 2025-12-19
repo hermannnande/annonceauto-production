@@ -154,44 +154,44 @@ export function ListingsPage() {
   );
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-4 md:py-8 pb-24 md:pb-8">
-      <div className="container mx-auto px-4">
-        {/* Header */}
-        <div className="mb-6">
-          <h1 className="text-3xl md:text-5xl text-[#0F172A] mb-2 font-[var(--font-poppins)] font-bold">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-2 md:py-8 pb-20 md:pb-8">
+      <div className="container mx-auto px-2 md:px-4">
+        {/* Header - COMPACT MOBILE */}
+        <div className="mb-3 md:mb-6">
+          <h1 className="text-xl md:text-5xl text-[#0F172A] mb-1 md:mb-2 font-[var(--font-poppins)] font-bold">
             Toutes les annonces
           </h1>
-          <p className="text-gray-600">{filteredVehicles.length} véhicule{filteredVehicles.length > 1 ? 's' : ''} trouvé{filteredVehicles.length > 1 ? 's' : ''}</p>
+          <p className="text-xs md:text-base text-gray-600">{filteredVehicles.length} véhicule{filteredVehicles.length > 1 ? 's' : ''} trouvé{filteredVehicles.length > 1 ? 's' : ''}</p>
         </div>
 
-        {/* Barre de recherche principale - TRÈS VISIBLE */}
-        <div className="bg-white rounded-2xl shadow-xl p-4 md:p-6 mb-6 border-2 border-[#FACC15]/20">
-          <div className="flex flex-col md:flex-row gap-4">
+        {/* Barre de recherche principale - COMPACT MOBILE */}
+        <div className="bg-white rounded-lg md:rounded-2xl shadow-xl p-2 md:p-6 mb-3 md:mb-6 border md:border-2 border-[#FACC15]/20">
+          <div className="flex flex-col md:flex-row gap-2 md:gap-4">
             {/* Recherche par texte */}
             <div className="flex-1">
-              <Label className="text-sm font-semibold text-[#0F172A] mb-2 block">
+              <Label className="text-xs md:text-sm font-semibold text-[#0F172A] mb-1 md:mb-2 block">
                 Rechercher un véhicule
               </Label>
               <div className="relative">
-                <Search className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
+                <Search className="absolute left-2 md:left-4 top-1/2 -translate-y-1/2 w-4 md:w-5 h-4 md:h-5 text-gray-400" />
                 <Input
                   type="text"
-                  placeholder="Ex: Toyota, BMW, Mercedes..."
+                  placeholder="Ex: Toyota, BMW..."
                   value={filters.searchQuery}
                   onChange={(e) => updateFilter('searchQuery', e.target.value)}
-                  className="pl-12 h-14 text-lg border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors"
+                  className="pl-8 md:pl-12 h-10 md:h-14 text-sm md:text-lg border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors"
                 />
               </div>
             </div>
 
             {/* Marque */}
             <div className="md:w-64">
-              <Label className="text-sm font-semibold text-[#0F172A] mb-2 block">
+              <Label className="text-xs md:text-sm font-semibold text-[#0F172A] mb-1 md:mb-2 block">
                 Marque
               </Label>
               <Select value={filters.brand} onValueChange={(value) => updateFilter('brand', value)}>
-                <SelectTrigger className="h-14 border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors">
-                  <SelectValue placeholder="Toutes les marques" />
+                <SelectTrigger className="h-10 md:h-14 border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors text-sm md:text-base">
+                  <SelectValue placeholder="Toutes" />
                 </SelectTrigger>
                 <SelectContent>
                   {/* Barre de recherche */}
@@ -224,9 +224,9 @@ export function ListingsPage() {
               <Button
                 onClick={() => setShowFilters(!showFilters)}
                 variant={hasActiveFilters ? "default" : "outline"}
-                className={`h-14 px-6 gap-2 ${hasActiveFilters ? 'bg-[#FACC15] text-[#0F172A] hover:bg-[#FBBF24]' : ''}`}
+                className={`h-10 md:h-14 px-4 md:px-6 gap-1 md:gap-2 text-xs md:text-base ${hasActiveFilters ? 'bg-[#FACC15] text-[#0F172A] hover:bg-[#FBBF24]' : ''}`}
               >
-                <SlidersHorizontal className="w-5 h-5" />
+                <SlidersHorizontal className="w-4 md:w-5 h-4 md:h-5" />
                 <span className="hidden md:inline">
                   {hasActiveFilters ? `Filtres (${Object.values(filters).filter(v => v && v !== 'all').length - 1})` : 'Plus de filtres'}
                 </span>
@@ -368,16 +368,16 @@ export function ListingsPage() {
           )}
         </AnimatePresence>
 
-        {/* Barre de tri */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6 flex flex-wrap gap-4 items-center justify-between">
-          <div className="text-gray-600">
+        {/* Barre de tri - COMPACT MOBILE */}
+        <div className="bg-white rounded-lg shadow p-2 md:p-4 mb-3 md:mb-6 flex flex-wrap gap-2 md:gap-4 items-center justify-between">
+          <div className="text-xs md:text-base text-gray-600">
             <span className="font-semibold text-[#0F172A]">{filteredVehicles.length}</span> résultat{filteredVehicles.length > 1 ? 's' : ''}
           </div>
 
-          <div className="flex items-center gap-3">
-            <span className="text-sm text-gray-600 hidden sm:inline">Trier par:</span>
+          <div className="flex items-center gap-2 md:gap-3">
+            <span className="text-xs md:text-sm text-gray-600 hidden sm:inline">Trier:</span>
             <Select value={sortBy} onValueChange={setSortBy}>
-              <SelectTrigger className="w-[180px]">
+              <SelectTrigger className="w-[140px] md:w-[180px] h-8 md:h-10 text-xs md:text-sm">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -391,9 +391,9 @@ export function ListingsPage() {
           </div>
         </div>
 
-        {/* Résultats */}
+        {/* Résultats - GRILLE COMPACTE MOBILE */}
         {filteredVehicles.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-6 mb-4 md:mb-8">
             {filteredVehicles.map((vehicle) => (
               <VehicleCard key={vehicle.id} vehicle={vehicle} />
             ))}
