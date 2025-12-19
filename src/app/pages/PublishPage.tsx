@@ -42,6 +42,7 @@ export function PublishPage() {
   const [currentStep, setCurrentStep] = useState(0);
   const [brandSearch, setBrandSearch] = useState('');
   const [showOtherBrand, setShowOtherBrand] = useState(false);
+  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [formData, setFormData] = useState({
     // Step 1: Vehicle Info
     brand: '',
@@ -99,6 +100,14 @@ export function PublishPage() {
 
   const updateFormData = (field: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
+    // Effacer l'erreur quand l'utilisateur commence à remplir le champ
+    if (errors[field]) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors[field];
+        return newErrors;
+      });
+    }
     
     // Si "Autre" est sélectionné, afficher le champ personnalisé
     if (field === 'brand' && value === 'Autre') {
@@ -113,40 +122,40 @@ export function PublishPage() {
     b.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
-  // Validation par step
-  const isStepValid = (step: number): boolean => {
+  // Validation par step avec messages d'erreur
+  const validateStep = (step: number): boolean => {
+    const newErrors: { [key: string]: string } = {};
+    
     switch (step) {
       case 0: // Step 1: Informations du véhicule
-        return !!(
-          formData.brand &&
-          (formData.brand !== 'autre' || formData.customBrand) &&
-          formData.year &&
-          formData.condition
-        );
+        if (!formData.brand) newErrors.brand = 'La marque est obligatoire';
+        if (formData.brand === 'autre' && !formData.customBrand) newErrors.customBrand = 'Veuillez préciser la marque';
+        if (!formData.year) newErrors.year = 'L\'année est obligatoire';
+        if (!formData.condition) newErrors.condition = 'L\'état est obligatoire';
+        break;
       case 1: // Step 2: Détails techniques
-        return !!(
-          formData.mileage &&
-          formData.transmission &&
-          formData.fuel &&
-          formData.color
-        );
+        if (!formData.mileage) newErrors.mileage = 'Le kilométrage est obligatoire';
+        if (!formData.transmission) newErrors.transmission = 'La transmission est obligatoire';
+        if (!formData.fuel) newErrors.fuel = 'Le type de carburant est obligatoire';
+        if (!formData.color) newErrors.color = 'La couleur est obligatoire';
+        break;
       case 2: // Step 3: Prix & Localisation
-        return !!(
-          formData.price &&
-          formData.location &&
-          formData.description &&
-          formData.description.length >= 10
-        );
+        if (!formData.price) newErrors.price = 'Le prix est obligatoire';
+        if (!formData.location) newErrors.location = 'La localisation est obligatoire';
+        if (!formData.description) newErrors.description = 'La description est obligatoire';
+        else if (formData.description.length < 10) newErrors.description = 'La description doit contenir au moins 10 caractères';
+        break;
       case 3: // Step 4: Images
-        return formData.images.length > 0;
-      default:
-        return false;
+        if (formData.images.length === 0) newErrors.images = 'Au moins une photo est obligatoire';
+        break;
     }
+    
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
   };
 
   const nextStep = () => {
-    if (!isStepValid(currentStep)) {
-      alert('Veuillez remplir tous les champs obligatoires avant de continuer.');
+    if (!validateStep(currentStep)) {
       return;
     }
     if (currentStep < steps.length - 1) {
