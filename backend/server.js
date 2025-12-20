@@ -18,7 +18,7 @@ import uploadRoutes from './src/routes/upload.routes.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware de sÃ©curitÃ©
+// Middleware de sÃƒÂ©curitÃƒÂ©
 app.use(helmet());
 
 // CORS - Autoriser toutes les origines (temporaire pour debug)
@@ -30,8 +30,8 @@ app.use(cors({
 // Rate limiting - Protection contre les attaques
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Max 100 requÃªtes par IP
-  message: 'Trop de requÃªtes, rÃ©essayez plus tard.'
+  max: 100, // Max 100 requÃƒÂªtes par IP
+  message: 'Trop de requÃƒÂªtes, rÃƒÂ©essayez plus tard.'
 });
 app.use('/api/', limiter);
 
@@ -50,7 +50,7 @@ app.use('/api/upload', uploadRoutes);
 // Route de test
 app.get('/', (req, res) => {
   res.json({
-    message: 'ðŸš— AnnonceAuto.ci API',
+    message: 'Ã°Å¸Å¡â€” AnnonceAuto.ci API',
     version: '1.0.0',
     status: 'online',
     endpoints: {
@@ -64,19 +64,19 @@ app.get('/', (req, res) => {
   });
 });
 
-// Route de santÃ©
+// Route de santÃƒÂ©
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Route de test de la base de donnÃ©es
+// Route de test de la base de donnÃƒÂ©es
 app.get('/api/test-db', async (req, res) => {
   try {
     const { query } = await import('./src/config/database.js');
     const result = await query('SELECT COUNT(*) as count FROM users');
     res.json({ 
       success: true, 
-      message: 'Base de donnÃ©es OK',
+      message: 'Base de donnÃƒÂ©es OK',
       users_count: result.rows[0].count 
     });
   } catch (error) {
@@ -91,7 +91,7 @@ app.get('/api/test-db', async (req, res) => {
 // Gestion des erreurs 404
 app.use((req, res) => {
   res.status(404).json({
-    error: 'Route non trouvÃ©e',
+    error: 'Route non trouvÃƒÂ©e',
     path: req.path
   });
 });
@@ -105,20 +105,57 @@ app.use((err, req, res, next) => {
   });
 });
 
-// DÃ©marrer le serveur
+// DÃƒÂ©marrer le serveur
+
+// Create super admin if not exists
+async function createAdminIfNotExists() {
+  try {
+    const { query } = await import('./src/config/database.js');
+    const adminEmail = 'hermannnande@gmail.com';
+    
+    // Check if admin exists
+    const existing = await query('SELECT id FROM users WHERE email = app.listen(PORT', [adminEmail]);
+    
+    if (existing.rows.length === 0) {
+      // Create admin with pre-hashed password
+      await query(`
+        INSERT INTO users (email, password, nom, prenom, telephone, role, credits, verified)
+        VALUES (app.listen(PORT, $2, $3, $4, $5, $6, $7, $8)
+      `, [
+        adminEmail,
+        '$2a$10$XLMUFLdE30tgVbhmoejpxONmWybZTU/T25cAkLSK8oQEYViawy8Cm',
+        'nande',
+        'hermann',
+        '+2250778030075',
+        'admin',
+        1000,
+        true
+      ]);
+      console.log('Super Admin created: hermannnande@gmail.com');
+    } else {
+      console.log('Super Admin already exists');
+    }
+  } catch (error) {
+    console.log('Admin check skipped (table may not exist yet)');
+  }
+}
+
+// Call createAdminIfNotExists after DB connection
+createAdminIfNotExists();
+
 app.listen(PORT, async () => {
-  console.log(`ðŸš€ Serveur dÃ©marrÃ© sur le port ${PORT}`);
-  console.log(`ðŸ“ http://localhost:${PORT}`);
-  console.log(`ðŸŒ Environnement: ${process.env.NODE_ENV}`);
+  console.log(`Ã°Å¸Å¡â‚¬ Serveur dÃƒÂ©marrÃƒÂ© sur le port ${PORT}`);
+  console.log(`Ã°Å¸â€œÂ http://localhost:${PORT}`);
+  console.log(`Ã°Å¸Å’Â Environnement: ${process.env.NODE_ENV}`);
   
-  // Test de connexion Ã  la base de donnÃ©es
+  // Test de connexion ÃƒÂ  la base de donnÃƒÂ©es
   try {
     const { query } = await import('./src/config/database.js');
     await query('SELECT NOW()');
-    console.log('âœ… Base de donnÃ©es connectÃ©e !');
+    console.log('Ã¢Å“â€¦ Base de donnÃƒÂ©es connectÃƒÂ©e !');
   } catch (error) {
-    console.error('âŒ Erreur de connexion Ã  la base de donnÃ©es:', error.message);
-    console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'dÃ©finie' : 'NON dÃ©finie');
+    console.error('Ã¢ÂÅ’ Erreur de connexion ÃƒÂ  la base de donnÃƒÂ©es:', error.message);
+    console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'dÃƒÂ©finie' : 'NON dÃƒÂ©finie');
   }
 });
 
