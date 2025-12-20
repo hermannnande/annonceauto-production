@@ -1,4 +1,4 @@
-import { useState, FormEvent } from 'react';
+﻿import { useState, FormEvent } from 'react';
 import { Link, useNavigate, useSearchParams } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, LogIn, Sparkles, ArrowLeft, AlertCircle } from 'lucide-react';
@@ -35,7 +35,7 @@ export function LoginPage() {
   const [searchParams] = useSearchParams();
   const { login } = useAuth();
   
-  // Récupérer le paramètre de redirection
+  // RÃ©cupÃ©rer le paramÃ¨tre de redirection
   const redirectPath = searchParams.get('redirect') || null;
 
   const handleLogin = async (e: FormEvent) => {
@@ -44,22 +44,22 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      await login(email, password);
+      const result = await login({ email, password });
       
-      // Si un paramètre de redirection existe, rediriger vers cette page
-      if (redirectPath) {
-        navigate(redirectPath);
-      } else {
-        // Sinon, redirection normale selon le rôle
+      if (result.success) {
         const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        if (userData.role === 'admin') {
+        if (redirectPath) {
+          navigate(redirectPath);
+        } else if (userData.role === 'admin') {
           navigate('/dashboard/admin');
         } else {
           navigate('/dashboard/vendeur');
         }
+      } else {
+        setError(result.error || 'Email ou mot de passe incorrect');
       }
-    } catch (err: any) {
-      setError(err.message || 'Email ou mot de passe incorrect');
+    } catch (err: unknown) {
+      setError('Erreur de connexion au serveur');
     } finally {
       setLoading(false);
     }
@@ -107,7 +107,7 @@ export function LoginPage() {
             className="inline-flex items-center gap-2 text-gray-600 hover:text-[#0F172A] transition-colors group"
           >
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">Retour à l'accueil</span>
+            <span className="font-medium">Retour Ã  l'accueil</span>
           </Link>
         </motion.div>
 
@@ -131,7 +131,7 @@ export function LoginPage() {
                   Connexion
                 </h1>
                 <p className="text-gray-600">
-                  Bienvenue ! Connectez-vous à votre compte
+                  Bienvenue ! Connectez-vous Ã  votre compte
                 </p>
               </div>
 
@@ -144,7 +144,7 @@ export function LoginPage() {
                 >
                   <AlertCircle className="w-5 h-5 text-[#FACC15]" />
                   <p className="text-sm">
-                    Vous devez être connecté pour publier une annonce
+                    Vous devez Ãªtre connectÃ© pour publier une annonce
                   </p>
                 </motion.div>
               )}
@@ -229,7 +229,7 @@ export function LoginPage() {
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <Input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
+                      placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -266,7 +266,7 @@ export function LoginPage() {
                     to="/mot-de-passe-oublie" 
                     className="text-sm text-[#FACC15] hover:text-[#FBBF24] font-semibold transition-colors"
                   >
-                    Mot de passe oublié ?
+                    Mot de passe oubliÃ© ?
                   </Link>
                 </div>
 
@@ -291,7 +291,7 @@ export function LoginPage() {
                     to="/inscription" 
                     className="text-[#0F172A] hover:text-[#FACC15] font-bold transition-colors inline-flex items-center gap-1 group"
                   >
-                    Créer un compte
+                    CrÃ©er un compte
                     <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                   </Link>
                 </p>
@@ -311,10 +311,12 @@ export function LoginPage() {
             <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
               <div className="w-2 h-2 bg-white rounded-full"></div>
             </div>
-            <span>Connexion sécurisée SSL</span>
+            <span>Connexion sÃ©curisÃ©e SSL</span>
           </div>
         </motion.div>
       </div>
     </div>
   );
 }
+
+
