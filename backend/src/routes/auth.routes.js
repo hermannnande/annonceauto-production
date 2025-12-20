@@ -15,36 +15,36 @@ const handleValidation = (req, res, next) => {
   next();
 };
 
-// 📝 INSCRIPTION
+// ðŸ“ INSCRIPTION
 router.post('/register', [
   body('email').isEmail().withMessage('Email invalide'),
-  body('password').isLength({ min: 6 }).withMessage('Mot de passe trop court (min 6 caractères)'),
+  body('password').isLength({ min: 6 }).withMessage('Mot de passe trop court (min 6 caractÃ¨res)'),
   body('nom').notEmpty().withMessage('Nom requis'),
-  body('prenom').notEmpty().withMessage('Prénom requis'),
-  body('telephone').notEmpty().withMessage('Téléphone requis')
+  body('prenom').notEmpty().withMessage('PrÃ©nom requis'),
+  body('telephone').notEmpty().withMessage('TÃ©lÃ©phone requis')
 ], handleValidation, async (req, res) => {
   try {
     const { email, password, nom, prenom, telephone, ville } = req.body;
 
-    // Vérifier si l'email existe déjà
+    // VÃ©rifier si l'email existe dÃ©jÃ 
     const userExists = await query('SELECT id FROM users WHERE email = $1', [email]);
     if (userExists.rows.length > 0) {
-      return res.status(400).json({ error: 'Cet email est déjà utilisé' });
+      return res.status(400).json({ error: 'Cet email est dÃ©jÃ  utilisÃ©' });
     }
 
     // Hasher le mot de passe
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Créer l'utilisateur
+    // CrÃ©er l'utilisateur
     const result = await query(`
       INSERT INTO users (email, password, nom, prenom, telephone, ville, credits)
       VALUES ($1, $2, $3, $4, $5, $6, $7)
       RETURNING id, email, nom, prenom, telephone, ville, role, credits, created_at
-    `, [email, hashedPassword, nom, prenom, telephone, ville, 5]); // 5 crédits offerts à l'inscription
+    `, [email, hashedPassword, nom, prenom, telephone, ville, 5]); // 5 crÃ©dits offerts Ã  l'inscription
 
     const user = result.rows[0];
 
-    // Générer le token JWT
+    // GÃ©nÃ©rer le token JWT
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -52,7 +52,7 @@ router.post('/register', [
     );
 
     res.status(201).json({
-      message: 'Inscription réussie ! 5 crédits offerts 🎉',
+      message: 'Inscription rÃ©ussie ! 5 crÃ©dits offerts ðŸŽ‰',
       token,
       user: {
         id: user.id,
@@ -72,7 +72,7 @@ router.post('/register', [
   }
 });
 
-// 🔐 CONNEXION
+// ðŸ” CONNEXION
 router.post('/login', [
   body('email').isEmail().withMessage('Email invalide'),
   body('password').notEmpty().withMessage('Mot de passe requis')
@@ -92,13 +92,13 @@ router.post('/login', [
 
     const user = result.rows[0];
 
-    // Vérifier le mot de passe
+    // VÃ©rifier le mot de passe
     const isValidPassword = await bcrypt.compare(password, user.password);
     if (!isValidPassword) {
       return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
     }
 
-    // Générer le token JWT
+    // GÃ©nÃ©rer le token JWT
     const token = jwt.sign(
       { userId: user.id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -106,7 +106,7 @@ router.post('/login', [
     );
 
     res.json({
-      message: 'Connexion réussie',
+      message: 'Connexion rÃ©ussie',
       token,
       user: {
         id: user.id,
@@ -126,13 +126,13 @@ router.post('/login', [
   }
 });
 
-// 👤 GET PROFIL (nécessite authentification)
+// ðŸ‘¤ GET PROFIL (nÃ©cessite authentification)
 router.get('/me', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
     
     if (!token) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: 'Non authentifiÃ©' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
@@ -143,7 +143,7 @@ router.get('/me', async (req, res) => {
     );
 
     if (result.rows.length === 0) {
-      return res.status(404).json({ error: 'Utilisateur non trouvé' });
+      return res.status(404).json({ error: 'Utilisateur non trouvÃ©' });
     }
 
     const user = result.rows[0];
@@ -167,18 +167,18 @@ router.get('/me', async (req, res) => {
   }
 });
 
-// 🔄 RAFRAÎCHIR TOKEN
+// ðŸ”„ RAFRAÃŽCHIR TOKEN
 router.post('/refresh', async (req, res) => {
   try {
     const token = req.headers.authorization?.replace('Bearer ', '');
     
     if (!token) {
-      return res.status(401).json({ error: 'Non authentifié' });
+      return res.status(401).json({ error: 'Non authentifiÃ©' });
     }
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     
-    // Générer un nouveau token
+    // GÃ©nÃ©rer un nouveau token
     const newToken = jwt.sign(
       { userId: decoded.userId, email: decoded.email, role: decoded.role },
       process.env.JWT_SECRET,
@@ -193,6 +193,3 @@ router.post('/refresh', async (req, res) => {
 });
 
 export default router;
-
-
-
