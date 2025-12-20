@@ -8,10 +8,10 @@ import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTr
 import { Input } from '../components/ui/input';
 import { Label } from '../components/ui/label';
 
-// Liste complète des marques de véhicules
+// Liste complÃ¨te des marques de vÃ©hicules
 const CAR_BRANDS = [
   'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Bugatti', 'Buick',
-  'Cadillac', 'Chevrolet', 'Chrysler', 'Citroën', 'Dacia', 'Daewoo', 'Daihatsu', 'Dodge',
+  'Cadillac', 'Chevrolet', 'Chrysler', 'CitroÃ«n', 'Dacia', 'Daewoo', 'Daihatsu', 'Dodge',
   'Ferrari', 'Fiat', 'Ford', 'Genesis', 'GMC', 'Honda', 'Hummer', 'Hyundai',
   'Infiniti', 'Isuzu', 'Jaguar', 'Jeep', 'Kia', 'Lamborghini', 'Land Rover', 'Lexus',
   'Lincoln', 'Lotus', 'Maserati', 'Mazda', 'McLaren', 'Mercedes-Benz', 'Mini', 'Mitsubishi',
@@ -37,7 +37,7 @@ export function ListingsPage() {
           <h1 className="text-3xl md:text-4xl text-[#0F172A] mb-2 font-[var(--font-poppins)] font-bold">
             Toutes les annonces
           </h1>
-          <p className="text-gray-600 text-sm md:text-base">{mockVehicles.length} véhicules disponibles</p>
+          <p className="text-gray-600 text-sm md:text-base">{mockVehicles.length} vÃ©hicules disponibles</p>
         </div>
 
         {/* Filters Bar */}
@@ -53,7 +53,7 @@ export function ListingsPage() {
               <SheetHeader>
                 <SheetTitle>Filtres de recherche</SheetTitle>
                 <SheetDescription>
-                  Affinez votre recherche de véhicule
+                  Affinez votre recherche de vÃ©hicule
                 </SheetDescription>
               </SheetHeader>
 
@@ -84,7 +84,7 @@ export function ListingsPage() {
                       ))}
                       {filteredBrands.length === 0 && (
                         <div className="px-2 py-4 text-sm text-gray-500 text-center">
-                          Aucune marque trouvée
+                          Aucune marque trouvÃ©e
                         </div>
                       )}
                     </SelectContent>
@@ -100,18 +100,18 @@ export function ListingsPage() {
                   </div>
                 </div>
 
-                {/* Année */}
+                {/* AnnÃ©e */}
                 <div>
-                  <Label>Année</Label>
+                  <Label>AnnÃ©e</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     <Input type="number" placeholder="De" />
-                    <Input type="number" placeholder="À" />
+                    <Input type="number" placeholder="Ã€" />
                   </div>
                 </div>
 
-                {/* Kilométrage */}
+                {/* KilomÃ©trage */}
                 <div>
-                  <Label>Kilométrage (km)</Label>
+                  <Label>KilomÃ©trage (km)</Label>
                   <div className="grid grid-cols-2 gap-2 mt-2">
                     <Input type="number" placeholder="Min" />
                     <Input type="number" placeholder="Max" />
@@ -145,14 +145,14 @@ export function ListingsPage() {
                       <SelectItem value="essence">Essence</SelectItem>
                       <SelectItem value="diesel">Diesel</SelectItem>
                       <SelectItem value="hybrid">Hybride</SelectItem>
-                      <SelectItem value="electric">Électrique</SelectItem>
+                      <SelectItem value="electric">Ã‰lectrique</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
 
                 {/* Condition */}
                 <div>
-                  <Label>État</Label>
+                  <Label>Ã‰tat</Label>
                   <Select>
                     <SelectTrigger>
                       <SelectValue placeholder="Tous" />
@@ -182,18 +182,18 @@ export function ListingsPage() {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="recent">Plus récent</SelectItem>
+                <SelectItem value="recent">Plus rÃ©cent</SelectItem>
                 <SelectItem value="price-asc">Prix croissant</SelectItem>
-                <SelectItem value="price-desc">Prix décroissant</SelectItem>
-                <SelectItem value="mileage">Kilométrage</SelectItem>
-                <SelectItem value="year">Année</SelectItem>
+                <SelectItem value="price-desc">Prix dÃ©croissant</SelectItem>
+                <SelectItem value="mileage">KilomÃ©trage</SelectItem>
+                <SelectItem value="year">AnnÃ©e</SelectItem>
               </SelectContent>
             </Select>
           </div>
         </div>
 
         {/* Vehicle Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 mb-8">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-2 md:gap-4 mb-6">
           {mockVehicles.map((vehicle) => (
             <VehicleCard key={vehicle.id} vehicle={vehicle} />
           ))}
@@ -202,7 +202,7 @@ export function ListingsPage() {
         {/* Pagination */}
         <div className="flex justify-center gap-2 flex-wrap">
           <Button variant="outline" disabled className="text-sm md:text-base">
-            Précédent
+            PrÃ©cÃ©dent
           </Button>
           <Button className="bg-[#FACC15] text-[#0F172A] hover:bg-[#FBBF24] text-sm md:text-base">
             1
