@@ -7,4 +7,13 @@ uploads/
 .DS_Store
 
 
+.env
+.env.local
+.env.production
+*.log
+uploads/
+.DS_Store
+
+
+
 
