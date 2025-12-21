@@ -1,4 +1,4 @@
-﻿const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://annonceauto-backend.up.railway.app';
+const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://annonceauto-backend.up.railway.app';
 
 export interface ApiResponse<T = unknown> {
   data?: T;
@@ -6,17 +6,24 @@ export interface ApiResponse<T = unknown> {
   message?: string;
 }
 
-const getHeaders = (): HeadersInit => {
+export const getAuthHeaders = (): HeadersInit => {
   const headers: HeadersInit = { 'Content-Type': 'application/json' };
   const token = localStorage.getItem('token');
   if (token) headers['Authorization'] = `Bearer ${token}`;
   return headers;
 };
 
+export const handleApiError = (error: any): Error => {
+  if (error instanceof Error) {
+    return error;
+  }
+  return new Error('Une erreur est survenue');
+};
+
 async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
   try {
     const url = `${API_BASE_URL}${endpoint}`;
-    const response = await fetch(url, { ...options, headers: { ...getHeaders(), ...options.headers } });
+    const response = await fetch(url, { ...options, headers: { ...getAuthHeaders(), ...options.headers } });
     const data = await response.json();
     if (!response.ok) return { error: data.error || data.message || 'Une erreur est survenue' };
     return { data };
