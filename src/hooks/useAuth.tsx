@@ -1,4 +1,4 @@
-﻿import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import * as authService from '../services/auth.service';
 
 interface User {
@@ -46,7 +46,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Charge les infos stockÃ©es si prÃ©sentes
+  // Charge les infos stockées si présentes
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
@@ -127,7 +127,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth doit Ãªtre utilisÃ© Ã  l'intÃ©rieur d'un AuthProvider");
+    throw new Error("useAuth doit être utilisé à l'intérieur d'un AuthProvider");
   }
   return context;
 }

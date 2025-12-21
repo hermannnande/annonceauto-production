@@ -1,4 +1,4 @@
-﻿import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
+import { DashboardLayout } from '../../components/dashboard/DashboardLayout';
 import { StatCard } from '../../components/dashboard/StatCard';
 import { Card } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
@@ -118,7 +118,7 @@ export function VendorDashboard() {
             iconBg="from-red-400 to-red-600"
           />
           <StatCard
-            title="Annonces boostÃ©es"
+            title="Annonces boostées"
             value="3"
             icon={TrendingUp}
             iconBg="from-green-400 to-green-600"
@@ -264,7 +264,7 @@ export function VendorDashboard() {
                       ) : (
                         <span className="flex items-center gap-1 px-3 py-1 bg-red-50 text-red-600 rounded-full text-xs font-semibold">
                           <XCircle className="w-3 h-3" />
-                          RefusÃ©e
+                          Refusée
                         </span>
                       )}
                     </div>
