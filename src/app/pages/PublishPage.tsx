@@ -1,6 +1,5 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useNavigate } from 'react-router-dom';
 import {
   ArrowRight,
   ArrowLeft,
@@ -26,7 +25,6 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../components/ui/textarea';
 import { Card } from '../components/ui/card';
 import { ImageUpload } from '../components/ImageUpload';
-import { useAuth } from '../../hooks/useAuth';
 
 // Liste complète des marques de véhicules
 const CAR_BRANDS = [
@@ -41,12 +39,9 @@ const CAR_BRANDS = [
 ].sort();
 
 export function PublishPage() {
-  const { user } = useAuth();
-  const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
   const [brandSearch, setBrandSearch] = useState('');
   const [showOtherBrand, setShowOtherBrand] = useState(false);
-  const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [formData, setFormData] = useState({
     // Step 1: Vehicle Info
     brand: '',
@@ -102,24 +97,8 @@ export function PublishPage() {
     }
   ];
 
-  // Vérifier si l'utilisateur est connecté
-  useEffect(() => {
-    if (!user) {
-      // Rediriger vers la page de connexion avec un paramètre de redirection
-      navigate('/connexion?redirect=/publier');
-    }
-  }, [user, navigate]);
-
   const updateFormData = (field: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
-    // Effacer l'erreur quand l'utilisateur commence à remplir le champ
-    if (errors[field]) {
-      setErrors(prev => {
-        const newErrors = { ...prev };
-        delete newErrors[field];
-        return newErrors;
-      });
-    }
     
     // Si "Autre" est sélectionné, afficher le champ personnalisé
     if (field === 'brand' && value === 'Autre') {
@@ -134,40 +113,40 @@ export function PublishPage() {
     b.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
-  // Validation par step avec messages d'erreur
-  const validateStep = (step: number): boolean => {
-    const newErrors: { [key: string]: string } = {};
-    
+  // Validation par step
+  const isStepValid = (step: number): boolean => {
     switch (step) {
       case 0: // Step 1: Informations du véhicule
-        if (!formData.brand) newErrors.brand = 'La marque est obligatoire';
-        if (formData.brand === 'autre' && !formData.customBrand) newErrors.customBrand = 'Veuillez préciser la marque';
-        if (!formData.year) newErrors.year = 'L\'année est obligatoire';
-        if (!formData.condition) newErrors.condition = 'L\'état est obligatoire';
-        break;
+        return !!(
+          formData.brand &&
+          (formData.brand !== 'autre' || formData.customBrand) &&
+          formData.year &&
+          formData.condition
+        );
       case 1: // Step 2: Détails techniques
-        if (!formData.mileage) newErrors.mileage = 'Le kilométrage est obligatoire';
-        if (!formData.transmission) newErrors.transmission = 'La transmission est obligatoire';
-        if (!formData.fuel) newErrors.fuel = 'Le type de carburant est obligatoire';
-        if (!formData.color) newErrors.color = 'La couleur est obligatoire';
-        break;
+        return !!(
+          formData.mileage &&
+          formData.transmission &&
+          formData.fuel &&
+          formData.color
+        );
       case 2: // Step 3: Prix & Localisation
-        if (!formData.price) newErrors.price = 'Le prix est obligatoire';
-        if (!formData.location) newErrors.location = 'La localisation est obligatoire';
-        if (!formData.description) newErrors.description = 'La description est obligatoire';
-        else if (formData.description.length < 10) newErrors.description = 'La description doit contenir au moins 10 caractères';
-        break;
+        return !!(
+          formData.price &&
+          formData.location &&
+          formData.description &&
+          formData.description.length >= 10
+        );
       case 3: // Step 4: Images
-        if (formData.images.length === 0) newErrors.images = 'Au moins une photo est obligatoire';
-        break;
+        return formData.images.length > 0;
+      default:
+        return false;
     }
-    
-    setErrors(newErrors);
-    return Object.keys(newErrors).length === 0;
   };
 
   const nextStep = () => {
-    if (!validateStep(currentStep)) {
+    if (!isStepValid(currentStep)) {
+      alert('Veuillez remplir tous les champs obligatoires avant de continuer.');
       return;
     }
     if (currentStep < steps.length - 1) {
@@ -185,22 +164,6 @@ export function PublishPage() {
     console.log('Form submitted:', formData);
     // Handle form submission
   };
-
-  // Afficher un loader pendant la vérification de connexion
-  if (!user) {
-    return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center">
-        <div className="text-center">
-          <motion.div
-            animate={{ rotate: 360 }}
-            transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
-            className="w-16 h-16 border-4 border-[#FACC15] border-t-transparent rounded-full mx-auto mb-4"
-          />
-          <p className="text-gray-600">Vérification de la connexion...</p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12">
@@ -701,80 +664,6 @@ export function PublishPage() {
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.5 }}
-          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6"
-        >
-          {[
-            {
-              icon: Zap,
-              title: 'Publication rapide',
-              description: 'Votre annonce en ligne en moins de 5 minutes',
-              gradient: 'from-yellow-500 to-orange-500'
-            },
-            {
-              icon: Shield,
-              title: 'Vendeurs vérifiés',
-              description: 'Badge de confiance pour rassurer les acheteurs',
-              gradient: 'from-green-500 to-emerald-500'
-            },
-            {
-              icon: Sparkles,
-              title: 'Visibilité maximale',
-              description: 'Votre annonce mise en avant auprès de milliers d\'acheteurs',
-              gradient: 'from-purple-500 to-pink-500'
-            }
-          ].map((benefit, index) => (
-            <Card key={index} className="p-6 text-center hover:shadow-xl transition-shadow border-0">
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center mx-auto mb-4`}>
-                <benefit.icon className="w-7 h-7 text-white" />
-              </div>
-              <h3 className="font-bold mb-2 font-[var(--font-poppins)]">{benefit.title}</h3>
-              <p className="text-sm text-gray-600">{benefit.description}</p>
-            </Card>
-          ))}
-        </motion.div>
-      </div>
-    </div>
-  );
-}
-
-          transition={{ delay: 0.5 }}
-          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6"
-        >
-          {[
-            {
-              icon: Zap,
-              title: 'Publication rapide',
-              description: 'Votre annonce en ligne en moins de 5 minutes',
-              gradient: 'from-yellow-500 to-orange-500'
-            },
-            {
-              icon: Shield,
-              title: 'Vendeurs vérifiés',
-              description: 'Badge de confiance pour rassurer les acheteurs',
-              gradient: 'from-green-500 to-emerald-500'
-            },
-            {
-              icon: Sparkles,
-              title: 'Visibilité maximale',
-              description: 'Votre annonce mise en avant auprès de milliers d\'acheteurs',
-              gradient: 'from-purple-500 to-pink-500'
-            }
-          ].map((benefit, index) => (
-            <Card key={index} className="p-6 text-center hover:shadow-xl transition-shadow border-0">
-              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center mx-auto mb-4`}>
-                <benefit.icon className="w-7 h-7 text-white" />
-              </div>
-              <h3 className="font-bold mb-2 font-[var(--font-poppins)]">{benefit.title}</h3>
-              <p className="text-sm text-gray-600">{benefit.description}</p>
-            </Card>
-          ))}
-        </motion.div>
-      </div>
-    </div>
-  );
-}
-
           transition={{ delay: 0.5 }}
           className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6"
         >
