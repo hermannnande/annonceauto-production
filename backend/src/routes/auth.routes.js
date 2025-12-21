@@ -51,7 +51,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email et mot de passe requis' });
     }
     const result = await query(
-      `SELECT id, email, password, nom, prenom, telephone, role, credits, verified, avatar, created_at
+      `SELECT id, email, password, nom, prenom, telephone, role, credits, verified, created_at
        FROM users WHERE email = $1`,
       [email.toLowerCase()]
     );
@@ -86,7 +86,7 @@ router.get('/me', async (req, res) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'annonceauto_secret_key_2024');
       const result = await query(
-        `SELECT id, email, nom, prenom, telephone, role, credits, verified, avatar, created_at
+        `SELECT id, email, nom, prenom, telephone, role, credits, verified, created_at
          FROM users WHERE id = $1`,
         [decoded.id]
       );
@@ -121,3 +121,4 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 export default router;
+
