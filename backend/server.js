@@ -16,12 +16,9 @@ import userRoutes from './src/routes/user.routes.js';
 import uploadRoutes from './src/routes/upload.routes.js';
 
 const app = express();
-
-// Trust proxy pour Railway
-app.set('trust proxy', 1);
 const PORT = process.env.PORT || 5000;
 
-// Middleware de sÃ©curitÃ©
+// Middleware de sécurité
 app.use(helmet());
 
 // CORS - Autoriser toutes les origines (temporaire pour debug)
@@ -33,8 +30,8 @@ app.use(cors({
 // Rate limiting - Protection contre les attaques
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Max 100 requÃªtes par IP
-  message: 'Trop de requÃªtes, rÃ©essayez plus tard.'
+  max: 100, // Max 100 requêtes par IP
+  message: 'Trop de requêtes, réessayez plus tard.'
 });
 app.use('/api/', limiter);
 
@@ -53,7 +50,7 @@ app.use('/api/upload', uploadRoutes);
 // Route de test
 app.get('/', (req, res) => {
   res.json({
-    message: 'ðŸš— AnnonceAuto.ci API',
+    message: '🚗 AnnonceAuto.ci API',
     version: '1.0.0',
     status: 'online',
     endpoints: {
@@ -67,19 +64,19 @@ app.get('/', (req, res) => {
   });
 });
 
-// Route de santÃ©
+// Route de santé
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Route de test de la base de donnÃ©es
+// Route de test de la base de données
 app.get('/api/test-db', async (req, res) => {
   try {
     const { query } = await import('./src/config/database.js');
     const result = await query('SELECT COUNT(*) as count FROM users');
     res.json({ 
       success: true, 
-      message: 'Base de donnÃ©es OK',
+      message: 'Base de données OK',
       users_count: result.rows[0].count 
     });
   } catch (error) {
@@ -94,7 +91,7 @@ app.get('/api/test-db', async (req, res) => {
 // Gestion des erreurs 404
 app.use((req, res) => {
   res.status(404).json({
-    error: 'Route non trouvÃ©e',
+    error: 'Route non trouvée',
     path: req.path
   });
 });
@@ -108,20 +105,20 @@ app.use((err, req, res, next) => {
   });
 });
 
-// DÃ©marrer le serveur
+// Démarrer le serveur
 app.listen(PORT, async () => {
-  console.log(`ðŸš€ Serveur dÃ©marrÃ© sur le port ${PORT}`);
-  console.log(`ðŸ“ http://localhost:${PORT}`);
-  console.log(`ðŸŒ Environnement: ${process.env.NODE_ENV}`);
+  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
+  console.log(`📍 http://localhost:${PORT}`);
+  console.log(`🌍 Environnement: ${process.env.NODE_ENV}`);
   
-  // Test de connexion Ã  la base de donnÃ©es
+  // Test de connexion à la base de données
   try {
     const { query } = await import('./src/config/database.js');
     await query('SELECT NOW()');
-    console.log('âœ… Base de donnÃ©es connectÃ©e !');
+    console.log('✅ Base de données connectée !');
   } catch (error) {
-    console.error('âŒ Erreur de connexion Ã  la base de donnÃ©es:', error.message);
-    console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'dÃ©finie' : 'NON dÃ©finie');
+    console.error('❌ Erreur de connexion à la base de données:', error.message);
+    console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'définie' : 'NON définie');
   }
 });
 
