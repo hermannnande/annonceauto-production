@@ -1,4 +1,4 @@
-﻿import express from 'express';
+import express from 'express';
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
 import { query } from '../config/database.js';
