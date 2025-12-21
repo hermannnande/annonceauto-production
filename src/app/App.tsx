@@ -1,4 +1,3 @@
-﻿import { AuthProvider } from '../hooks/useAuth';
 import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { Header } from './components/Header';
 import { Footer } from './components/Footer';
@@ -30,7 +29,6 @@ import { AdminSettings } from './pages/dashboard/AdminSettings';
 
 export default function App() {
   return (
-    <AuthProvider>
     <BrowserRouter>
       <Routes>
         {/* Public routes with Header/Footer */}
@@ -107,6 +105,5 @@ export default function App() {
         <Route path="/merci" element={<ThankYouPage />} />
       </Routes>
     </BrowserRouter>
-    </AuthProvider>
   );
 }

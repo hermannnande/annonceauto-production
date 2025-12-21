@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
+﻿import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import * as authService from '../services/auth.service';
 
 interface User {
@@ -7,96 +7,127 @@ interface User {
   nom: string;
   prenom: string;
   telephone: string;
-  role: string;
+  ville?: string;
+  role: 'vendeur' | 'admin';
   credits: number;
-  verified: boolean;
+  avatar_url?: string;
+  verified?: boolean;
 }
 
 interface AuthContextType {
   user: User | null;
-  isLoading: boolean;
-  isAuthenticated: boolean;
-  login: (credentials: { email: string; password: string }) => Promise<void>;
+  token: string | null;
+  loading: boolean;
+  login: (email: string, password: string) => Promise<void>;
   register: (data: any) => Promise<void>;
   logout: () => void;
-  refreshUser: () => Promise<void>;
+  updateUser: (data: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+function mapApiUserToLocal(user: authService.User): User {
+  const [firstName, ...rest] = (user.full_name || '').split(' ');
+  return {
+    id: user.id,
+    email: user.email,
+    nom: firstName || '',
+    prenom: rest.join(' ') || '',
+    telephone: user.phone,
+    role: user.role === 'admin' ? 'admin' : 'vendeur',
+    credits: user.credits,
+    avatar_url: user.profile_image,
+    verified: user.is_verified,
+  };
+}
 
+export function AuthProvider({ children }: { children: ReactNode }) {
+  const [user, setUser] = useState<User | null>(null);
+  const [token, setToken] = useState<string | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  // Charge les infos stockÃ©es si prÃ©sentes
   useEffect(() => {
-    const initAuth = async () => {
-      const token = localStorage.getItem('token');
-      if (token) {
-        try {
-          const response = await authService.getProfile();
-          setUser(response.user);
-        } catch (error) {
-          localStorage.removeItem('token');
-          localStorage.removeItem('user');
-        }
+    const storedToken = localStorage.getItem('token');
+    const storedUser = localStorage.getItem('user');
+
+    if (storedToken && storedUser) {
+      try {
+        setToken(storedToken);
+        setUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Erreur lors du chargement de l'utilisateur:", error);
+        localStorage.removeItem('token');
+        localStorage.removeItem('user');
       }
-      setIsLoading(false);
-    };
-    initAuth();
+    }
+    setLoading(false);
   }, []);
 
-  const login = async (credentials: { email: string; password: string }) => {
-    const response = await authService.login(credentials);
+  const login = async (email: string, password: string) => {
+    const response = await authService.login({ email, password });
+
+    if (!response.success || !response.token || !response.user) {
+      throw new Error(response.message || 'Erreur de connexion');
+    }
+
+    const mappedUser = mapApiUserToLocal(response.user);
+    setToken(response.token);
+    setUser(mappedUser);
     localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(response.user));
-    setUser(response.user);
+    localStorage.setItem('user', JSON.stringify(mappedUser));
   };
 
   const register = async (data: any) => {
-    const response = await authService.register(data);
+    const registerData = {
+      email: data.email,
+      password: data.password,
+      nom: data.nom,
+      prenom: data.prenom,
+      telephone: data.telephone,
+      ville: data.ville,
+      role: 'vendeur' as const,
+    };
+
+    const response = await authService.register(registerData);
+
+    if (!response.success || !response.token || !response.user) {
+      throw new Error(response.message || "Erreur lors de l'inscription");
+    }
+
+    const mappedUser = mapApiUserToLocal(response.user);
+    setToken(response.token);
+    setUser(mappedUser);
     localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(response.user));
-    setUser(response.user);
+    localStorage.setItem('user', JSON.stringify(mappedUser));
   };
 
   const logout = () => {
-    authService.logout();
+    setUser(null);
+    setToken(null);
     localStorage.removeItem('token');
     localStorage.removeItem('user');
-    setUser(null);
   };
 
-  const refreshUser = async () => {
-    try {
-      const response = await authService.getProfile();
-      setUser(response.user);
-      localStorage.setItem('user', JSON.stringify(response.user));
-    } catch (error) {
-      logout();
+  const updateUser = (data: Partial<User>) => {
+    if (user) {
+      const updatedUser = { ...user, ...data };
+      setUser(updatedUser);
+      localStorage.setItem('user', JSON.stringify(updatedUser));
     }
   };
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      isLoading,
-      isAuthenticated: !!user,
-      login,
-      register,
-      logout,
-      refreshUser
-    }}>
+    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateUser }}>
       {children}
     </AuthContext.Provider>
   );
-};
+}
 
-export const useAuth = () => {
+export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth doit Ãªtre utilisÃ© Ã  l'intÃ©rieur d'un AuthProvider");
   }
   return context;
-};
-
-export default AuthProvider;
+}

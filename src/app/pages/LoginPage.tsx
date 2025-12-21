@@ -1,5 +1,5 @@
-﻿import { useState, FormEvent } from 'react';
-import { Link, useNavigate, useSearchParams } from 'react-router-dom';
+import { useState, FormEvent } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import { motion } from 'motion/react';
 import { Mail, Lock, Eye, EyeOff, LogIn, Sparkles, ArrowLeft, AlertCircle } from 'lucide-react';
 import { Button } from '../components/ui/button';
@@ -32,11 +32,7 @@ export function LoginPage() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
   const { login } = useAuth();
-  
-  // RÃ©cupÃ©rer le paramÃ¨tre de redirection
-  const redirectPath = searchParams.get('redirect') || null;
 
   const handleLogin = async (e: FormEvent) => {
     e.preventDefault();
@@ -44,22 +40,16 @@ export function LoginPage() {
     setLoading(true);
 
     try {
-      const result = await login({ email, password });
-      
-      if (result.success) {
-        const userData = JSON.parse(localStorage.getItem('user') || '{}');
-        if (redirectPath) {
-          navigate(redirectPath);
-        } else if (userData.role === 'admin') {
-          navigate('/dashboard/admin');
-        } else {
-          navigate('/dashboard/vendeur');
-        }
+      await login(email, password);
+      // Récupérer l'utilisateur pour savoir où rediriger
+      const userData = JSON.parse(localStorage.getItem('user') || '{}');
+      if (userData.role === 'admin') {
+        navigate('/dashboard/admin');
       } else {
-        setError(result.error || 'Email ou mot de passe incorrect');
+        navigate('/dashboard/vendeur');
       }
-    } catch (err: unknown) {
-      setError('Erreur de connexion au serveur');
+    } catch (err: any) {
+      setError(err.message || 'Email ou mot de passe incorrect');
     } finally {
       setLoading(false);
     }
@@ -107,7 +97,7 @@ export function LoginPage() {
             className="inline-flex items-center gap-2 text-gray-600 hover:text-[#0F172A] transition-colors group"
           >
             <ArrowLeft className="w-5 h-5 group-hover:-translate-x-1 transition-transform" />
-            <span className="font-medium">Retour Ã  l'accueil</span>
+            <span className="font-medium">Retour à l'accueil</span>
           </Link>
         </motion.div>
 
@@ -131,23 +121,9 @@ export function LoginPage() {
                   Connexion
                 </h1>
                 <p className="text-gray-600">
-                  Bienvenue ! Connectez-vous Ã  votre compte
+                  Bienvenue ! Connectez-vous à votre compte
                 </p>
               </div>
-
-              {/* Info Message si redirection */}
-              {redirectPath && (
-                <motion.div
-                  initial={{ opacity: 0, y: -10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  className="bg-[#FACC15]/10 border border-[#FACC15]/30 text-[#0F172A] px-4 py-3 rounded-xl flex items-center gap-2 mb-6"
-                >
-                  <AlertCircle className="w-5 h-5 text-[#FACC15]" />
-                  <p className="text-sm">
-                    Vous devez Ãªtre connectÃ© pour publier une annonce
-                  </p>
-                </motion.div>
-              )}
 
               {/* Error Message */}
               {error && (
@@ -229,7 +205,7 @@ export function LoginPage() {
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
                     <Input
                       type={showPassword ? 'text' : 'password'}
-                      placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
+                      placeholder="••••••••"
                       value={password}
                       onChange={(e) => setPassword(e.target.value)}
                       required
@@ -266,7 +242,7 @@ export function LoginPage() {
                     to="/mot-de-passe-oublie" 
                     className="text-sm text-[#FACC15] hover:text-[#FBBF24] font-semibold transition-colors"
                   >
-                    Mot de passe oubliÃ© ?
+                    Mot de passe oublié ?
                   </Link>
                 </div>
 
@@ -291,7 +267,7 @@ export function LoginPage() {
                     to="/inscription" 
                     className="text-[#0F172A] hover:text-[#FACC15] font-bold transition-colors inline-flex items-center gap-1 group"
                   >
-                    CrÃ©er un compte
+                    Créer un compte
                     <Sparkles className="w-4 h-4 group-hover:rotate-12 transition-transform" />
                   </Link>
                 </p>
@@ -311,12 +287,10 @@ export function LoginPage() {
             <div className="w-4 h-4 bg-green-500 rounded-full flex items-center justify-center">
               <div className="w-2 h-2 bg-white rounded-full"></div>
             </div>
-            <span>Connexion sÃ©curisÃ©e SSL</span>
+            <span>Connexion sécurisée SSL</span>
           </div>
         </motion.div>
       </div>
     </div>
   );
 }
-
-

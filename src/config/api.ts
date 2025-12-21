@@ -1,45 +1,100 @@
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'https://annonceauto-backend.up.railway.app';
+/**
+ * Configuration de l'API Backend
+ * AnnonceAuto.ci
+ */
 
-export interface ApiResponse<T = unknown> {
-  data?: T;
-  error?: string;
-  message?: string;
-}
+// URL de l'API Backend (Railway)
+export const API_BASE_URL = 
+  import.meta.env.VITE_API_URL || 
+  'https://annonceauto-production-production.up.railway.app';
 
-export const getAuthHeaders = (): HeadersInit => {
-  const headers: HeadersInit = { 'Content-Type': 'application/json' };
+// URL de l'API Cloudinary (pour upload d'images)
+export const CLOUDINARY_URL = `${API_BASE_URL}/api/upload`;
+
+// Configuration des endpoints
+export const API_ENDPOINTS = {
+  // Authentification
+  auth: {
+    register: `${API_BASE_URL}/api/auth/register`,
+    login: `${API_BASE_URL}/api/auth/login`,
+    profile: `${API_BASE_URL}/api/auth/me`,
+    me: `${API_BASE_URL}/api/auth/me`,
+  },
+  
+  // Véhicules
+  vehicles: {
+    list: `${API_BASE_URL}/api/vehicles`,
+    detail: (id: number) => `${API_BASE_URL}/api/vehicles/${id}`,
+    create: `${API_BASE_URL}/api/vehicles`,
+    update: (id: number) => `${API_BASE_URL}/api/vehicles/${id}`,
+    delete: (id: number) => `${API_BASE_URL}/api/vehicles/${id}`,
+    myVehicles: `${API_BASE_URL}/api/vehicles/my-vehicles`,
+    incrementView: (id: number) => `${API_BASE_URL}/api/vehicles/${id}/view`,
+    incrementWhatsApp: (id: number) => `${API_BASE_URL}/api/vehicles/${id}/whatsapp`,
+  },
+  
+  // Crédits et Paiements
+  credits: {
+    recharge: `${API_BASE_URL}/api/credits/recharge`,
+    boost: (id: number) => `${API_BASE_URL}/api/credits/boost/${id}`,
+    history: `${API_BASE_URL}/api/credits/history`,
+  },
+  
+  // Paiements Mobile Money
+  payments: {
+    initiate: `${API_BASE_URL}/api/payments/initiate`,
+    verify: `${API_BASE_URL}/api/payments/verify`,
+  },
+  
+  // Admin
+  admin: {
+    users: `${API_BASE_URL}/api/users`,
+    userDetail: (id: number) => `${API_BASE_URL}/api/users/${id}`,
+    toggleStatus: (id: number) => `${API_BASE_URL}/api/users/${id}/toggle-status`,
+    moderateVehicle: (id: number) => `${API_BASE_URL}/api/vehicles/${id}/moderate`,
+  },
+  
+  // Upload
+  upload: {
+    image: `${API_BASE_URL}/api/upload/image`,
+  },
+};
+
+// Helper pour ajouter le token JWT aux requêtes
+export const getAuthHeaders = () => {
   const token = localStorage.getItem('token');
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-  return headers;
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
 };
 
-export const handleApiError = (error: any): Error => {
-  if (error instanceof Error) {
-    return error;
+// Helper pour les uploads de fichiers
+export const getAuthHeadersMultipart = () => {
+  const token = localStorage.getItem('token');
+  return {
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
+
+// Helper pour gérer les erreurs API
+export const handleApiError = (error: any) => {
+  if (error.response) {
+    // Erreur de réponse du serveur
+    const message = error.response.data?.message || 'Une erreur est survenue';
+    return { success: false, message };
+  } else if (error.request) {
+    // Pas de réponse du serveur
+    return { 
+      success: false, 
+      message: 'Impossible de contacter le serveur. Vérifiez votre connexion.' 
+    };
+  } else {
+    // Erreur de configuration
+    return { success: false, message: error.message || 'Erreur inconnue' };
   }
-  return new Error('Une erreur est survenue');
 };
 
-async function apiRequest<T>(endpoint: string, options: RequestInit = {}): Promise<ApiResponse<T>> {
-  try {
-    const url = `${API_BASE_URL}${endpoint}`;
-    const response = await fetch(url, { ...options, headers: { ...getAuthHeaders(), ...options.headers } });
-    const data = await response.json();
-    if (!response.ok) return { error: data.error || data.message || 'Une erreur est survenue' };
-    return { data };
-  } catch (error) {
-    console.error('API Error:', error);
-    return { error: 'Erreur de connexion au serveur' };
-  }
-}
+export default API_BASE_URL;
 
-export const api = {
-  get: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: 'GET' }),
-  post: <T>(endpoint: string, body?: unknown) => apiRequest<T>(endpoint, { method: 'POST', body: body ? JSON.stringify(body) : undefined }),
-  put: <T>(endpoint: string, body?: unknown) => apiRequest<T>(endpoint, { method: 'PUT', body: body ? JSON.stringify(body) : undefined }),
-  patch: <T>(endpoint: string, body?: unknown) => apiRequest<T>(endpoint, { method: 'PATCH', body: body ? JSON.stringify(body) : undefined }),
-  delete: <T>(endpoint: string) => apiRequest<T>(endpoint, { method: 'DELETE' }),
-};
 
-export { API_BASE_URL };
-export default api;
