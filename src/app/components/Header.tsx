@@ -1,16 +1,12 @@
-import { useState, useEffect } from 'react';
+﻿import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, Car, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
-import { UserMenu } from './UserMenu';
-import { useAuth } from '../../hooks/useAuth';
 
 export function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const { user } = useAuth();
-  const userConnected = !!user;
   const location = useLocation();
 
   useEffect(() => {
@@ -23,8 +19,9 @@ export function Header() {
 
   const navItems = [
     { label: 'Acheter une voiture', path: '/annonces' },
-    { label: 'Déposer une annonce', path: '/publier' },
-    { label: 'Comment ça marche', path: '/#comment-ca-marche' },
+    { label: 'DÃ©poser une annonce', path: '/publier' },
+    { label: 'Comment Ã§a marche', path: '/#comment-ca-marche' },
+    { label: 'Mon Espace', path: '/dashboard' },
   ];
 
   return (
@@ -45,7 +42,7 @@ export function Header() {
           className="flex items-center justify-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
-          <span>🎉 Offre spéciale : Publication gratuite pour les nouveaux vendeurs !</span>
+          <span>ðŸŽ‰ Offre spÃ©ciale : Publication gratuite pour les nouveaux vendeurs !</span>
           <Sparkles className="w-4 h-4" />
         </motion.div>
       </div>
@@ -82,36 +79,31 @@ export function Header() {
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] group-hover:w-full transition-all duration-300" />
               </Link>
             ))}
-            {!userConnected && (
-              <Link
-                to="/connexion"
-                className="relative text-white hover:text-[#FACC15] transition-colors font-medium group"
-              >
-                Connexion
-                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] group-hover:w-full transition-all duration-300" />
-              </Link>
-            )}
-            {userConnected && <UserMenu />}
+            <Link
+              to="/connexion"
+              className="relative text-white hover:text-[#FACC15] transition-colors font-medium group"
+            >
+              Connexion
+              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] group-hover:w-full transition-all duration-300" />
+            </Link>
           </nav>
 
-          {/* CTA Button Desktop (only when déconnecté) */}
-          {!userConnected && (
-            <motion.div
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
-              className="hidden md:block"
+          {/* CTA Button Desktop */}
+          <motion.div
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
+            className="hidden md:block"
+          >
+            <Button
+              asChild
+              className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg shadow-[#FACC15]/50 hover:shadow-xl hover:shadow-[#FACC15]/70 transition-all duration-300 gap-2"
             >
-              <Button
-                asChild
-                className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg shadow-[#FACC15]/50 hover:shadow-xl hover:shadow-[#FACC15]/70 transition-all duration-300 gap-2"
-              >
-                <Link to="/publier">
-                  <Sparkles className="w-4 h-4" />
-                  Publier mon véhicule
-                </Link>
-              </Button>
-            </motion.div>
-          )}
+              <Link to="/publier">
+                <Sparkles className="w-4 h-4" />
+                Publier mon vÃ©hicule
+              </Link>
+            </Button>
+          </motion.div>
 
           {/* Mobile Menu Button */}
           <motion.button
@@ -134,13 +126,6 @@ export function Header() {
               className="md:hidden overflow-hidden"
             >
               <div className="py-6 border-t border-white/10">
-                {/* User Info Mobile */}
-                {userConnected && (
-                  <div className="mb-4 pb-4 border-b border-white/10">
-                    <UserMenu />
-                  </div>
-                )}
-
                 <nav className="flex flex-col gap-4">
                   {navItems.map((item, index) => (
                     <motion.div
@@ -158,76 +143,34 @@ export function Header() {
                       </Link>
                     </motion.div>
                   ))}
-                  {!userConnected && (
-                    <motion.div
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      transition={{ delay: navItems.length * 0.1 }}
+                  <motion.div
+                    initial={{ opacity: 0, x: -20 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    transition={{ delay: navItems.length * 0.1 }}
+                  >
+                    <Link
+                      to="/connexion"
+                      className="block py-3 px-4 text-white hover:text-[#FACC15] hover:bg-white/5 rounded-lg transition-all font-medium"
+                      onClick={() => setMobileMenuOpen(false)}
                     >
-                      <Link
-                        to="/connexion"
-                        className="block py-3 px-4 text-white hover:text-[#FACC15] hover:bg-white/5 rounded-lg transition-all font-medium"
-                        onClick={() => setMobileMenuOpen(false)}
-                      >
-                        Connexion / Inscription
+                      Connexion / Inscription
+                    </Link>
+                  </motion.div>
+                  <motion.div
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: (navItems.length + 1) * 0.1 }}
+                  >
+                    <Button
+                      asChild
+                      className="w-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg gap-2"
+                    >
+                      <Link to="/publier" onClick={() => setMobileMenuOpen(false)}>
+                        <Sparkles className="w-4 h-4" />
+                        Publier mon vÃ©hicule
                       </Link>
-                    </motion.div>
-                  )}
-                  {!userConnected && (
-                    <motion.div
-                      initial={{ opacity: 0, y: 20 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      transition={{ delay: (navItems.length + 1) * 0.1 }}
-                    >
-                      <Button
-                        asChild
-                        className="w-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg gap-2"
-                      >
-                        <Link to="/publier" onClick={() => setMobileMenuOpen(false)}>
-                          <Sparkles className="w-4 h-4" />
-                          Publier mon véhicule
-                        </Link>
-                      </Button>
-                    </motion.div>
-                  )}
-                </nav>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.header>
-  );
-}
-
-                        className="w-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg gap-2"
-                      >
-                        <Link to="/publier" onClick={() => setMobileMenuOpen(false)}>
-                          <Sparkles className="w-4 h-4" />
-                          Publier mon véhicule
-                        </Link>
-                      </Button>
-                    </motion.div>
-                  )}
-                </nav>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
-    </motion.header>
-  );
-}
-
-                        className="w-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg gap-2"
-                      >
-                        <Link to="/publier" onClick={() => setMobileMenuOpen(false)}>
-                          <Sparkles className="w-4 h-4" />
-                          Publier mon véhicule
-                        </Link>
-                      </Button>
-                    </motion.div>
-                  )}
+                    </Button>
+                  </motion.div>
                 </nav>
               </div>
             </motion.div>
