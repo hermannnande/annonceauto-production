@@ -1,4 +1,4 @@
-﻿import { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, Car, Sparkles } from 'lucide-react';
@@ -181,6 +181,44 @@ export function Header() {
                     >
                       <Button
                         asChild
+                        className="w-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg gap-2"
+                      >
+                        <Link to="/publier" onClick={() => setMobileMenuOpen(false)}>
+                          <Sparkles className="w-4 h-4" />
+                          Publier mon véhicule
+                        </Link>
+                      </Button>
+                    </motion.div>
+                  )}
+                </nav>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.header>
+  );
+}
+
+                        className="w-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg gap-2"
+                      >
+                        <Link to="/publier" onClick={() => setMobileMenuOpen(false)}>
+                          <Sparkles className="w-4 h-4" />
+                          Publier mon véhicule
+                        </Link>
+                      </Button>
+                    </motion.div>
+                  )}
+                </nav>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </div>
+    </motion.header>
+  );
+}
+
                         className="w-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg gap-2"
                       >
                         <Link to="/publier" onClick={() => setMobileMenuOpen(false)}>

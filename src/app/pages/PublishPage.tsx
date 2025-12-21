@@ -737,3 +737,77 @@ export function PublishPage() {
     </div>
   );
 }
+
+          transition={{ delay: 0.5 }}
+          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+          {[
+            {
+              icon: Zap,
+              title: 'Publication rapide',
+              description: 'Votre annonce en ligne en moins de 5 minutes',
+              gradient: 'from-yellow-500 to-orange-500'
+            },
+            {
+              icon: Shield,
+              title: 'Vendeurs vérifiés',
+              description: 'Badge de confiance pour rassurer les acheteurs',
+              gradient: 'from-green-500 to-emerald-500'
+            },
+            {
+              icon: Sparkles,
+              title: 'Visibilité maximale',
+              description: 'Votre annonce mise en avant auprès de milliers d\'acheteurs',
+              gradient: 'from-purple-500 to-pink-500'
+            }
+          ].map((benefit, index) => (
+            <Card key={index} className="p-6 text-center hover:shadow-xl transition-shadow border-0">
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center mx-auto mb-4`}>
+                <benefit.icon className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="font-bold mb-2 font-[var(--font-poppins)]">{benefit.title}</h3>
+              <p className="text-sm text-gray-600">{benefit.description}</p>
+            </Card>
+          ))}
+        </motion.div>
+      </div>
+    </div>
+  );
+}
+
+          transition={{ delay: 0.5 }}
+          className="mt-12 grid grid-cols-1 md:grid-cols-3 gap-6"
+        >
+          {[
+            {
+              icon: Zap,
+              title: 'Publication rapide',
+              description: 'Votre annonce en ligne en moins de 5 minutes',
+              gradient: 'from-yellow-500 to-orange-500'
+            },
+            {
+              icon: Shield,
+              title: 'Vendeurs vérifiés',
+              description: 'Badge de confiance pour rassurer les acheteurs',
+              gradient: 'from-green-500 to-emerald-500'
+            },
+            {
+              icon: Sparkles,
+              title: 'Visibilité maximale',
+              description: 'Votre annonce mise en avant auprès de milliers d\'acheteurs',
+              gradient: 'from-purple-500 to-pink-500'
+            }
+          ].map((benefit, index) => (
+            <Card key={index} className="p-6 text-center hover:shadow-xl transition-shadow border-0">
+              <div className={`w-14 h-14 rounded-2xl bg-gradient-to-br ${benefit.gradient} flex items-center justify-center mx-auto mb-4`}>
+                <benefit.icon className="w-7 h-7 text-white" />
+              </div>
+              <h3 className="font-bold mb-2 font-[var(--font-poppins)]">{benefit.title}</h3>
+              <p className="text-sm text-gray-600">{benefit.description}</p>
+            </Card>
+          ))}
+        </motion.div>
+      </div>
+    </div>
+  );
+}
