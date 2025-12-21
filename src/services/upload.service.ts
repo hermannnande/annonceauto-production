@@ -1,404 +1,98 @@
-import { API_ENDPOINTS, getAuthHeaders, getAuthHeadersMultipart, handleApiError } from '../config/api';
+import { API_BASE_URL, handleApiError } from '../config/api';
 
-export interface UploadResponse {
-  success: boolean;
-  message?: string;
-  url?: string;
-}
-
-/**
- * Upload d'une image vers Cloudinary via le backend
- */
-export const uploadImage = async (file: File): Promise<UploadResponse> => {
+export const uploadImage = async (file: File): Promise<{ url: string; public_id: string }> => {
   try {
+    const token = localStorage.getItem('token');
     const formData = new FormData();
     formData.append('image', file);
 
-    const response = await fetch(API_ENDPOINTS.upload.image, {
+    const response = await fetch(`${API_BASE_URL}/api/upload/image`, {
       method: 'POST',
-      headers: getAuthHeadersMultipart(),
-      body: formData,
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
     });
 
-    const result = await response.json();
-
     if (!response.ok) {
-      return { 
-        success: false, 
-        message: result.message || 'Erreur lors de l\'upload de l\'image' 
-      };
+      const error = await response.json();
+      throw new Error(error.error || 'Erreur lors de l\'upload');
     }
 
-    return { success: true, url: result.url };
+    return await response.json();
   } catch (error) {
-    return handleApiError(error);
+    throw handleApiError(error);
   }
 };
 
-/**
- * Upload de plusieurs images
- */
-export const uploadMultipleImages = async (files: File[]): Promise<{
-  success: boolean;
-  message?: string;
-  urls?: string[];
-}> => {
+export const uploadImages = async (files: File[]): Promise<{ url: string; public_id: string }[]> => {
   try {
-    const uploadPromises = files.map(file => uploadImage(file));
-    const results = await Promise.all(uploadPromises);
-
-    const failedUploads = results.filter(r => !r.success);
-    
-    if (failedUploads.length > 0) {
-      return {
-        success: false,
-        message: `${failedUploads.length} image(s) n'ont pas pu être uploadées`,
-      };
-    }
-
-    const urls = results.map(r => r.url).filter(Boolean) as string[];
-    
-    return { success: true, urls };
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-
-export interface UploadResponse {
-  success: boolean;
-  message?: string;
-  url?: string;
-}
-
-/**
- * Upload d'une image vers Cloudinary via le backend
- */
-export const uploadImage = async (file: File): Promise<UploadResponse> => {
-  try {
+    const token = localStorage.getItem('token');
     const formData = new FormData();
-    formData.append('image', file);
-
-    const response = await fetch(API_ENDPOINTS.upload.image, {
-      method: 'POST',
-      headers: getAuthHeadersMultipart(),
-      body: formData,
+    
+    files.forEach((file) => {
+      formData.append('images', file);
     });
 
-    const result = await response.json();
+    const response = await fetch(`${API_BASE_URL}/api/upload/images`, {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
+    });
 
     if (!response.ok) {
-      return { 
-        success: false, 
-        message: result.message || 'Erreur lors de l\'upload de l\'image' 
-      };
+      const error = await response.json();
+      throw new Error(error.error || 'Erreur lors de l\'upload');
     }
 
-    return { success: true, url: result.url };
+    const result = await response.json();
+    return result.images;
   } catch (error) {
-    return handleApiError(error);
+    throw handleApiError(error);
   }
 };
 
-/**
- * Upload de plusieurs images
- */
-export const uploadMultipleImages = async (files: File[]): Promise<{
-  success: boolean;
-  message?: string;
-  urls?: string[];
-}> => {
+export const uploadAvatar = async (file: File): Promise<{ url: string; public_id: string }> => {
   try {
-    const uploadPromises = files.map(file => uploadImage(file));
-    const results = await Promise.all(uploadPromises);
-
-    const failedUploads = results.filter(r => !r.success);
-    
-    if (failedUploads.length > 0) {
-      return {
-        success: false,
-        message: `${failedUploads.length} image(s) n'ont pas pu être uploadées`,
-      };
-    }
-
-    const urls = results.map(r => r.url).filter(Boolean) as string[];
-    
-    return { success: true, urls };
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-
-
-
-
-
-export interface UploadResponse {
-  success: boolean;
-  message?: string;
-  url?: string;
-}
-
-/**
- * Upload d'une image vers Cloudinary via le backend
- */
-export const uploadImage = async (file: File): Promise<UploadResponse> => {
-  try {
+    const token = localStorage.getItem('token');
     const formData = new FormData();
-    formData.append('image', file);
+    formData.append('avatar', file);
 
-    const response = await fetch(API_ENDPOINTS.upload.image, {
+    const response = await fetch(`${API_BASE_URL}/api/upload/avatar`, {
       method: 'POST',
-      headers: getAuthHeadersMultipart(),
-      body: formData,
+      headers: {
+        'Authorization': `Bearer ${token}`
+      },
+      body: formData
     });
 
-    const result = await response.json();
-
     if (!response.ok) {
-      return { 
-        success: false, 
-        message: result.message || 'Erreur lors de l\'upload de l\'image' 
-      };
+      const error = await response.json();
+      throw new Error(error.error || 'Erreur lors de l\'upload');
     }
 
-    return { success: true, url: result.url };
+    return await response.json();
   } catch (error) {
-    return handleApiError(error);
+    throw handleApiError(error);
   }
 };
 
-/**
- * Upload de plusieurs images
- */
-export const uploadMultipleImages = async (files: File[]): Promise<{
-  success: boolean;
-  message?: string;
-  urls?: string[];
-}> => {
+export const deleteImage = async (publicId: string): Promise<void> => {
   try {
-    const uploadPromises = files.map(file => uploadImage(file));
-    const results = await Promise.all(uploadPromises);
-
-    const failedUploads = results.filter(r => !r.success);
-    
-    if (failedUploads.length > 0) {
-      return {
-        success: false,
-        message: `${failedUploads.length} image(s) n'ont pas pu être uploadées`,
-      };
-    }
-
-    const urls = results.map(r => r.url).filter(Boolean) as string[];
-    
-    return { success: true, urls };
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-
-export interface UploadResponse {
-  success: boolean;
-  message?: string;
-  url?: string;
-}
-
-/**
- * Upload d'une image vers Cloudinary via le backend
- */
-export const uploadImage = async (file: File): Promise<UploadResponse> => {
-  try {
-    const formData = new FormData();
-    formData.append('image', file);
-
-    const response = await fetch(API_ENDPOINTS.upload.image, {
-      method: 'POST',
-      headers: getAuthHeadersMultipart(),
-      body: formData,
+    const token = localStorage.getItem('token');
+    const response = await fetch(`${API_BASE_URL}/api/upload/image/${encodeURIComponent(publicId)}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${token}`
+      }
     });
 
-    const result = await response.json();
-
     if (!response.ok) {
-      return { 
-        success: false, 
-        message: result.message || 'Erreur lors de l\'upload de l\'image' 
-      };
+      throw new Error('Erreur lors de la suppression');
     }
-
-    return { success: true, url: result.url };
   } catch (error) {
-    return handleApiError(error);
+    throw handleApiError(error);
   }
 };
-
-/**
- * Upload de plusieurs images
- */
-export const uploadMultipleImages = async (files: File[]): Promise<{
-  success: boolean;
-  message?: string;
-  urls?: string[];
-}> => {
-  try {
-    const uploadPromises = files.map(file => uploadImage(file));
-    const results = await Promise.all(uploadPromises);
-
-    const failedUploads = results.filter(r => !r.success);
-    
-    if (failedUploads.length > 0) {
-      return {
-        success: false,
-        message: `${failedUploads.length} image(s) n'ont pas pu être uploadées`,
-      };
-    }
-
-    const urls = results.map(r => r.url).filter(Boolean) as string[];
-    
-    return { success: true, urls };
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-
-
-
-
-
-export interface UploadResponse {
-  success: boolean;
-  message?: string;
-  url?: string;
-}
-
-/**
- * Upload d'une image vers Cloudinary via le backend
- */
-export const uploadImage = async (file: File): Promise<UploadResponse> => {
-  try {
-    const formData = new FormData();
-    formData.append('image', file);
-
-    const response = await fetch(API_ENDPOINTS.upload.image, {
-      method: 'POST',
-      headers: getAuthHeadersMultipart(),
-      body: formData,
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      return { 
-        success: false, 
-        message: result.message || 'Erreur lors de l\'upload de l\'image' 
-      };
-    }
-
-    return { success: true, url: result.url };
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-/**
- * Upload de plusieurs images
- */
-export const uploadMultipleImages = async (files: File[]): Promise<{
-  success: boolean;
-  message?: string;
-  urls?: string[];
-}> => {
-  try {
-    const uploadPromises = files.map(file => uploadImage(file));
-    const results = await Promise.all(uploadPromises);
-
-    const failedUploads = results.filter(r => !r.success);
-    
-    if (failedUploads.length > 0) {
-      return {
-        success: false,
-        message: `${failedUploads.length} image(s) n'ont pas pu être uploadées`,
-      };
-    }
-
-    const urls = results.map(r => r.url).filter(Boolean) as string[];
-    
-    return { success: true, urls };
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-
-export interface UploadResponse {
-  success: boolean;
-  message?: string;
-  url?: string;
-}
-
-/**
- * Upload d'une image vers Cloudinary via le backend
- */
-export const uploadImage = async (file: File): Promise<UploadResponse> => {
-  try {
-    const formData = new FormData();
-    formData.append('image', file);
-
-    const response = await fetch(API_ENDPOINTS.upload.image, {
-      method: 'POST',
-      headers: getAuthHeadersMultipart(),
-      body: formData,
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      return { 
-        success: false, 
-        message: result.message || 'Erreur lors de l\'upload de l\'image' 
-      };
-    }
-
-    return { success: true, url: result.url };
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-/**
- * Upload de plusieurs images
- */
-export const uploadMultipleImages = async (files: File[]): Promise<{
-  success: boolean;
-  message?: string;
-  urls?: string[];
-}> => {
-  try {
-    const uploadPromises = files.map(file => uploadImage(file));
-    const results = await Promise.all(uploadPromises);
-
-    const failedUploads = results.filter(r => !r.success);
-    
-    if (failedUploads.length > 0) {
-      return {
-        success: false,
-        message: `${failedUploads.length} image(s) n'ont pas pu être uploadées`,
-      };
-    }
-
-    const urls = results.map(r => r.url).filter(Boolean) as string[];
-    
-    return { success: true, urls };
-  } catch (error) {
-    return handleApiError(error);
-  }
-};
-
-
-
-
-
-
