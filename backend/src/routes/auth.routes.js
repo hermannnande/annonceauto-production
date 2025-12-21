@@ -51,8 +51,7 @@ router.post('/login', async (req, res) => {
       return res.status(400).json({ error: 'Email et mot de passe requis' });
     }
     const result = await query(
-      `SELECT id, email, password, nom, prenom, telephone, role, credits, verified, created_at
-       FROM users WHERE email = $1`,
+      'SELECT id, email, password, nom, prenom, telephone, role, credits, verified, created_at FROM users WHERE email = $1',
       [email.toLowerCase()]
     );
     if (result.rows.length === 0) {
@@ -64,10 +63,9 @@ router.post('/login', async (req, res) => {
       return res.status(401).json({ error: 'Email ou mot de passe incorrect' });
     }
     const token = generateToken(user);
-    await query('UPDATE users SET last_login = NOW() WHERE id = $1', [user.id]);
     res.json({
       message: 'Connexion reussie',
-      user: { id: user.id, email: user.email, nom: user.nom, prenom: user.prenom, telephone: user.telephone, role: user.role, credits: user.credits, verified: user.verified, avatar: user.avatar },
+      user: { id: user.id, email: user.email, nom: user.nom, prenom: user.prenom, telephone: user.telephone, role: user.role, credits: user.credits, verified: user.verified },
       token
     });
   } catch (error) {
@@ -86,8 +84,7 @@ router.get('/me', async (req, res) => {
     try {
       const decoded = jwt.verify(token, process.env.JWT_SECRET || 'annonceauto_secret_key_2024');
       const result = await query(
-        `SELECT id, email, nom, prenom, telephone, role, credits, verified, created_at
-         FROM users WHERE id = $1`,
+        'SELECT id, email, nom, prenom, telephone, role, credits, verified, created_at FROM users WHERE id = $1',
         [decoded.id]
       );
       if (result.rows.length === 0) {
@@ -121,4 +118,3 @@ router.post('/forgot-password', async (req, res) => {
 });
 
 export default router;
-
