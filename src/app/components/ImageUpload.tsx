@@ -13,7 +13,7 @@ type UploadItem = {
   id: string;
   previewUrl: string;
   remoteUrl?: string;
-  status: 'pending' | 'uploading' | 'done' | 'error';
+  status: 'uploading' | 'done' | 'error';
 };
 
 const uid = () => Math.random().toString(36).slice(2);
@@ -23,7 +23,10 @@ export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps
   const [isDragging, setIsDragging] = useState(false);
   const [error, setError] = useState('');
 
-  const remoteImages = useMemo(() => items.filter(i => i.status === 'done' && i.remoteUrl).map(i => i.remoteUrl!) , [items]);
+  const remoteImages = useMemo(
+    () => items.filter(i => i.status === 'done' && i.remoteUrl).map(i => i.remoteUrl!),
+    [items]
+  );
 
   useEffect(() => {
     onImagesChange(remoteImages);
@@ -31,7 +34,6 @@ export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps
 
   useEffect(() => {
     return () => {
-      // cleanup previews
       items.forEach(i => {
         if (i.previewUrl.startsWith('blob:')) {
           try { URL.revokeObjectURL(i.previewUrl); } catch {}
@@ -43,16 +45,13 @@ export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-    const files = Array.from(e.dataTransfer.files);
-    void handleFiles(files);
+    void handleFiles(Array.from(e.dataTransfer.files));
   }, []);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files);
-      void handleFiles(files);
-      e.target.value = '';
-    }
+    if (!e.target.files) return;
+    void handleFiles(Array.from(e.target.files));
+    e.target.value = '';
   };
 
   const handleFiles = async (files: File[]) => {
@@ -60,14 +59,14 @@ export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps
 
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
     if (imageFiles.length === 0) {
-      setError('Veuillez sÃ©lectionner uniquement des images.');
+      setError('Veuillez selectionner uniquement des images.');
       return;
     }
 
     const spaceLeft = Math.max(0, maxImages - items.length);
     const selected = imageFiles.slice(0, spaceLeft);
     if (selected.length === 0) {
-      setError(`Vous avez dÃ©jÃ  atteint la limite (${maxImages} images).`);
+      setError(`Vous avez deja atteint la limite (${maxImages} images).`);
       return;
     }
 
@@ -82,7 +81,7 @@ export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps
     const result = await uploadMultipleImages(selected);
     if (!result.success || !result.urls) {
       setItems(prev => prev.map(i => placeholders.some(p => p.id === i.id) ? { ...i, status: 'error' } : i));
-      setError(result.message || 'Erreur lors de l\'upload des images');
+      setError(result.message || "Erreur lors de l'upload des images");
       return;
     }
 
@@ -107,9 +106,7 @@ export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps
     });
   };
 
-  const previewImages = useMemo(() => {
-    return items.map(i => i.remoteUrl || i.previewUrl);
-  }, [items]);
+  const previewImages = useMemo(() => items.map(i => i.remoteUrl || i.previewUrl), [items]);
 
   return (
     <div className="space-y-4">
@@ -126,50 +123,32 @@ export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps
         onDrop={handleDrop}
         whileHover={{ scale: 1.01 }}
         className={`relative border-2 border-dashed rounded-2xl p-8 transition-all duration-300 ${
-          isDragging
-            ? 'border-[#FACC15] bg-[#FACC15]/10'
-            : 'border-gray-300 hover:border-[#FACC15] hover:bg-gray-50'
+          isDragging ? 'border-[#FACC15] bg-[#FACC15]/10' : 'border-gray-300 hover:border-[#FACC15] hover:bg-gray-50'
         }`}
       >
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={handleFileInput}
-          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-        />
+        <input type="file" multiple accept="image/*" onChange={handleFileInput} className="absolute inset-0 w-full h-full opacity-0 cursor-pointer" />
 
         <div className="flex flex-col items-center justify-center text-center">
           <motion.div
             animate={{ y: isDragging ? -10 : 0 }}
             className={`w-20 h-20 rounded-2xl flex items-center justify-center mb-4 ${
-              isDragging
-                ? 'bg-gradient-to-br from-[#FACC15] to-[#FBBF24]'
-                : 'bg-gradient-to-br from-gray-100 to-gray-200'
+              isDragging ? 'bg-gradient-to-br from-[#FACC15] to-[#FBBF24]' : 'bg-gradient-to-br from-gray-100 to-gray-200'
             }`}
           >
             <Upload className={`w-10 h-10 ${isDragging ? 'text-white' : 'text-gray-400'}`} />
           </motion.div>
 
           <h3 className="text-lg font-bold text-gray-900 mb-2 font-[var(--font-poppins)]">
-            {isDragging ? 'DÃ©posez vos photos ici' : 'Ajoutez vos photos'}
+            {isDragging ? 'Deposez vos photos ici' : 'Ajoutez vos photos'}
           </h3>
           <p className="text-sm text-gray-500 mb-4">
-            Glissez-dÃ©posez ou cliquez pour sÃ©lectionner ({items.length}/{maxImages})
+            Glissez-deposez ou cliquez pour selectionner ({items.length}/{maxImages})
           </p>
 
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <Sparkles className="w-4 h-4" />
-            <span>JPG, PNG jusqu'Ã  5MB par image</span>
+            <span>JPG, PNG jusqu'a 5MB par image</span>
           </div>
-        </div>
-
-        <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 rounded-b-2xl overflow-hidden">
-          <motion.div
-            initial={{ width: 0 }}
-            animate={{ width: `${(items.length / maxImages) * 100}%` }}
-            className="h-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24]"
-          />
         </div>
       </motion.div>
 

@@ -7,6 +7,7 @@ import {
   User,
   Mail,
   Phone,
+  MapPin,
   Bell,
   Lock,
   Save,
@@ -69,7 +70,6 @@ export function AdminSettings() {
       });
 
       await refreshUser();
-
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
@@ -82,14 +82,14 @@ export function AdminSettings() {
 
   const handleSaveNotImplemented = () => {
     setSaveSuccess(false);
-    setSaveError('Cette section est une maquette (fonctionnalitÃ© en cours dâ€™implÃ©mentation).');
+    setSaveError("Cette section est une maquette (fonctionnalite en cours d'implementation).");
     setTimeout(() => setSaveError(''), 5000);
   };
 
   const tabs = [
     { id: 'profile', label: 'Profil', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'SÃ©curitÃ©', icon: Lock },
+    { id: 'security', label: 'Securite', icon: Lock },
     { id: 'platform', label: 'Plateforme', icon: SettingsIcon },
   ] as const;
 
@@ -97,8 +97,8 @@ export function AdminSettings() {
     <DashboardLayout userType="admin">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-[#0F172A]">ParamÃ¨tres</h1>
-          <p className="text-gray-600 mt-2">GÃ©rez vos informations et les paramÃ¨tres de la plateforme</p>
+          <h1 className="text-3xl font-bold text-[#0F172A]">Parametres</h1>
+          <p className="text-gray-600 mt-2">Gerez vos informations et les parametres de la plateforme</p>
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-2">
@@ -131,7 +131,7 @@ export function AdminSettings() {
             className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3"
           >
             <CheckCircle className="w-5 h-5 text-green-600" />
-            <span className="text-green-800 font-medium">ParamÃ¨tres enregistrÃ©s avec succÃ¨s !</span>
+            <span className="text-green-800 font-medium">Parametres enregistres avec succes !</span>
           </motion.div>
         )}
 
@@ -160,7 +160,7 @@ export function AdminSettings() {
                     type="button"
                     onClick={handleSaveNotImplemented}
                     className="absolute bottom-0 right-0 w-8 h-8 bg-[#FACC15] rounded-full flex items-center justify-center text-[#0F172A] hover:bg-[#FBBF24] transition-colors"
-                    aria-label="Changer la photo (non implÃ©mentÃ©)"
+                    aria-label="Changer la photo (non implemente)"
                   >
                     <Camera className="w-4 h-4" />
                   </button>
@@ -169,7 +169,7 @@ export function AdminSettings() {
                   <p className="font-medium text-gray-900 mb-1">Changer la photo</p>
                   <p className="text-sm text-gray-500 mb-3">JPG, PNG ou GIF. Max 5MB.</p>
                   <Button onClick={handleSaveNotImplemented} className="bg-gray-100 text-gray-700 hover:bg-gray-200">
-                    TÃ©lÃ©charger
+                    Telecharger
                   </Button>
                 </div>
               </div>
@@ -220,7 +220,7 @@ export function AdminSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4" />
-                      TÃ©lÃ©phone
+                      Telephone
                     </div>
                   </label>
                   <input
@@ -251,12 +251,12 @@ export function AdminSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <div className="flex items-center gap-2">
                       <Shield className="w-4 h-4" />
-                      RÃ´le
+                      Role
                     </div>
                   </label>
                   <input
                     type="text"
-                    value={user?.role === 'super_admin' ? 'Super Administrateur' : user?.role === 'admin' ? 'Administrateur' : 'Vendeur'}
+                    value={user?.role === 'super_admin' ? 'Super Admin' : user?.role === 'admin' ? 'Admin' : 'Vendeur'}
                     disabled
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-500"
                   />
@@ -290,7 +290,7 @@ export function AdminSettings() {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <Card className="p-6">
               <h3 className="text-xl font-bold text-[#0F172A] mb-4">Notifications</h3>
-              <p className="text-gray-600 mb-6">Maquette: la sauvegarde nâ€™est pas encore implÃ©mentÃ©e.</p>
+              <p className="text-gray-600 mb-6">Maquette: la sauvegarde n'est pas encore implementee.</p>
               <div className="flex justify-end">
                 <Button onClick={handleSaveNotImplemented} className="bg-gradient-to-r from-[#0F172A] to-[#1e293b] text-white font-bold px-8">
                   <Save className="w-4 h-4 mr-2" />
@@ -304,8 +304,8 @@ export function AdminSettings() {
         {activeTab === 'security' && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <Card className="p-6">
-              <h3 className="text-xl font-bold text-[#0F172A] mb-4">SÃ©curitÃ©</h3>
-              <p className="text-gray-600 mb-6">Maquette: changement de mot de passe / 2FA non branchÃ©s.</p>
+              <h3 className="text-xl font-bold text-[#0F172A] mb-4">Securite</h3>
+              <p className="text-gray-600 mb-6">Maquette: changement de mot de passe / 2FA non branches.</p>
               <div className="flex justify-end">
                 <Button onClick={handleSaveNotImplemented} className="bg-gradient-to-r from-[#0F172A] to-[#1e293b] text-white font-bold px-8">
                   <Lock className="w-4 h-4 mr-2" />
@@ -320,7 +320,7 @@ export function AdminSettings() {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <Card className="p-6">
               <h3 className="text-xl font-bold text-[#0F172A] mb-4">Plateforme</h3>
-              <p className="text-gray-600 mb-6">Maquette: paramÃ¨tres de tarification et options systÃ¨me non branchÃ©s.</p>
+              <p className="text-gray-600 mb-6">Maquette: parametres de tarification et options systeme non branches.</p>
               <div className="flex justify-end">
                 <Button onClick={handleSaveNotImplemented} className="bg-gradient-to-r from-[#0F172A] to-[#1e293b] text-white font-bold px-8">
                   <SettingsIcon className="w-4 h-4 mr-2" />

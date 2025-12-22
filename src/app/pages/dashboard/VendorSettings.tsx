@@ -71,7 +71,6 @@ export function VendorSettings() {
       });
 
       await refreshUser();
-
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (error: any) {
@@ -84,14 +83,14 @@ export function VendorSettings() {
 
   const handleSaveNotImplemented = () => {
     setSaveSuccess(false);
-    setSaveError('Cette section est une maquette (fonctionnalitÃ© en cours dâ€™implÃ©mentation).');
+    setSaveError("Cette section est une maquette (fonctionnalite en cours d'implementation).");
     setTimeout(() => setSaveError(''), 5000);
   };
 
   const tabs = [
     { id: 'profile', label: 'Profil', icon: User },
     { id: 'notifications', label: 'Notifications', icon: Bell },
-    { id: 'security', label: 'SÃ©curitÃ©', icon: Lock },
+    { id: 'security', label: 'Securite', icon: Lock },
     { id: 'business', label: 'Entreprise', icon: Building },
   ] as const;
 
@@ -99,8 +98,8 @@ export function VendorSettings() {
     <DashboardLayout userType="vendor">
       <div className="space-y-6">
         <div>
-          <h1 className="text-3xl font-bold text-[#0F172A]">ParamÃ¨tres</h1>
-          <p className="text-gray-600 mt-2">GÃ©rez vos informations personnelles et vos prÃ©fÃ©rences</p>
+          <h1 className="text-3xl font-bold text-[#0F172A]">Parametres</h1>
+          <p className="text-gray-600 mt-2">Gerez vos informations personnelles et vos preferences</p>
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-2">
@@ -133,7 +132,7 @@ export function VendorSettings() {
             className="bg-green-50 border border-green-200 rounded-xl p-4 flex items-center gap-3"
           >
             <CheckCircle className="w-5 h-5 text-green-600" />
-            <span className="text-green-800 font-medium">ParamÃ¨tres enregistrÃ©s avec succÃ¨s !</span>
+            <span className="text-green-800 font-medium">Parametres enregistres avec succes !</span>
           </motion.div>
         )}
 
@@ -162,7 +161,7 @@ export function VendorSettings() {
                     type="button"
                     onClick={handleSaveNotImplemented}
                     className="absolute bottom-0 right-0 w-8 h-8 bg-[#0F172A] rounded-full flex items-center justify-center text-white hover:bg-[#1e293b] transition-colors"
-                    aria-label="Changer la photo (non implÃ©mentÃ©)"
+                    aria-label="Changer la photo (non implemente)"
                   >
                     <Camera className="w-4 h-4" />
                   </button>
@@ -171,7 +170,7 @@ export function VendorSettings() {
                   <p className="font-medium text-gray-900 mb-1">Changer la photo</p>
                   <p className="text-sm text-gray-500 mb-3">JPG, PNG ou GIF. Max 5MB.</p>
                   <Button onClick={handleSaveNotImplemented} className="bg-gray-100 text-gray-700 hover:bg-gray-200">
-                    TÃ©lÃ©charger
+                    Telecharger
                   </Button>
                 </div>
               </div>
@@ -180,7 +179,7 @@ export function VendorSettings() {
             <Card className="p-6">
               <h3 className="text-xl font-bold text-[#0F172A] mb-6">Informations personnelles</h3>
               <p className="text-sm text-gray-500 mb-6">
-                Les champs <span className="font-medium">nom/prÃ©nom/email/tÃ©lÃ©phone/ville</span> sont sauvegardÃ©s. Le reste est encore une maquette.
+                Les champs <span className="font-medium">nom/prenom/email/telephone/ville</span> sont sauvegardes. Le reste est encore une maquette.
               </p>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -225,7 +224,7 @@ export function VendorSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <div className="flex items-center gap-2">
                       <Phone className="w-4 h-4" />
-                      TÃ©lÃ©phone
+                      Telephone
                     </div>
                   </label>
                   <input
@@ -256,14 +255,14 @@ export function VendorSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <div className="flex items-center gap-2">
                       <MapPin className="w-4 h-4" />
-                      Adresse (non sauvegardÃ©e pour le moment)
+                      Adresse (non sauvegardee pour le moment)
                     </div>
                   </label>
                   <textarea
                     rows={3}
                     value={formData.adresse}
                     onChange={(e) => setFormData((prev) => ({ ...prev, adresse: e.target.value }))}
-                    placeholder="Ex: Cocody, AngrÃ© 8Ã¨me tranche"
+                    placeholder="Ex: Cocody, Angre 8eme tranche"
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl bg-gray-50 text-gray-700"
                   />
                 </div>
@@ -295,8 +294,8 @@ export function VendorSettings() {
         {activeTab === 'notifications' && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <Card className="p-6">
-              <h3 className="text-xl font-bold text-[#0F172A] mb-4">PrÃ©fÃ©rences de notification</h3>
-              <p className="text-gray-600 mb-6">Maquette: la sauvegarde nâ€™est pas encore implÃ©mentÃ©e.</p>
+              <h3 className="text-xl font-bold text-[#0F172A] mb-4">Preferences de notification</h3>
+              <p className="text-gray-600 mb-6">Maquette: la sauvegarde n'est pas encore implementee.</p>
               <div className="flex justify-end">
                 <Button onClick={handleSaveNotImplemented} className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] font-bold px-8">
                   <Save className="w-4 h-4 mr-2" />
@@ -310,8 +309,8 @@ export function VendorSettings() {
         {activeTab === 'security' && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <Card className="p-6">
-              <h3 className="text-xl font-bold text-[#0F172A] mb-4">SÃ©curitÃ©</h3>
-              <p className="text-gray-600 mb-6">Maquette: changement de mot de passe non branchÃ©.</p>
+              <h3 className="text-xl font-bold text-[#0F172A] mb-4">Securite</h3>
+              <p className="text-gray-600 mb-6">Maquette: changement de mot de passe non branche.</p>
               <div className="flex justify-end">
                 <Button onClick={handleSaveNotImplemented} className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] font-bold px-8">
                   <Lock className="w-4 h-4 mr-2" />
@@ -326,7 +325,7 @@ export function VendorSettings() {
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
             <Card className="p-6">
               <h3 className="text-xl font-bold text-[#0F172A] mb-4">Entreprise</h3>
-              <p className="text-gray-600 mb-6">Maquette: informations professionnelles non branchÃ©es.</p>
+              <p className="text-gray-600 mb-6">Maquette: informations professionnelles non branchees.</p>
               <div className="flex justify-end">
                 <Button onClick={handleSaveNotImplemented} className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] font-bold px-8">
                   <Save className="w-4 h-4 mr-2" />
