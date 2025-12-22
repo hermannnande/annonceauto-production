@@ -1,13 +1,15 @@
-import { useState, useEffect } from 'react';
-import { Link, useLocation } from 'react-router-dom';
+import { useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { Menu, X, Car, Sparkles } from 'lucide-react';
 import { Button } from './ui/button';
+import { UserMenu } from './UserMenu';
+import { useAuth } from '../../hooks/useAuth';
 
 export function Header() {
+  const { isAuthenticated } = useAuth();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const location = useLocation();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -19,10 +21,12 @@ export function Header() {
 
   const navItems = [
     { label: 'Acheter une voiture', path: '/annonces' },
-    { label: 'Déposer une annonce', path: '/publier' },
-    { label: 'Comment ça marche', path: '/#comment-ca-marche' },
+    { label: 'Deposer une annonce', path: '/publier' },
+    { label: 'Comment ca marche', path: '/#comment-ca-marche' },
     { label: 'Mon Espace', path: '/dashboard' },
   ];
+
+  const closeMobile = () => setMobileMenuOpen(false);
 
   return (
     <motion.header
@@ -34,7 +38,7 @@ export function Header() {
           : 'bg-[#0F172A]'
       }`}
     >
-      {/* Top Banner - Premium Badge */}
+      {/* Top Banner */}
       <div className="bg-gradient-to-r from-[#FACC15] via-[#FBBF24] to-[#FACC15] text-[#0F172A] text-center py-2 text-sm font-medium">
         <motion.div
           animate={{ opacity: [1, 0.7, 1] }}
@@ -42,14 +46,14 @@ export function Header() {
           className="flex items-center justify-center gap-2"
         >
           <Sparkles className="w-4 h-4" />
-          <span>🎉 Offre spéciale : Publication gratuite pour les nouveaux vendeurs !</span>
+          <span>Offre speciale : Publication gratuite pour les nouveaux vendeurs !</span>
           <Sparkles className="w-4 h-4" />
         </motion.div>
       </div>
 
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-20">
-          {/* Logo with Animation */}
+          {/* Logo */}
           <Link to="/" className="flex items-center gap-3 group">
             <motion.div
               whileHover={{ rotate: 360, scale: 1.1 }}
@@ -79,40 +83,55 @@ export function Header() {
                 <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] group-hover:w-full transition-all duration-300" />
               </Link>
             ))}
-            <Link
-              to="/connexion"
-              className="relative text-white hover:text-[#FACC15] transition-colors font-medium group"
-            >
-              Connexion
-              <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] group-hover:w-full transition-all duration-300" />
-            </Link>
           </nav>
 
-          {/* CTA Button Desktop */}
-          <motion.div
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            className="hidden md:block"
-          >
-            <Button
-              asChild
-              className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg shadow-[#FACC15]/50 hover:shadow-xl hover:shadow-[#FACC15]/70 transition-all duration-300 gap-2"
-            >
-              <Link to="/publier">
-                <Sparkles className="w-4 h-4" />
-                Publier mon véhicule
+          {/* Right side (Desktop): User + CTA */}
+          <div className="hidden md:flex items-center gap-4">
+            {isAuthenticated ? (
+              <UserMenu />
+            ) : (
+              <Link
+                to="/connexion"
+                className="relative text-white hover:text-[#FACC15] transition-colors font-medium group"
+              >
+                Connexion
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] group-hover:w-full transition-all duration-300" />
               </Link>
-            </Button>
-          </motion.div>
+            )}
 
-          {/* Mobile Menu Button */}
-          <motion.button
-            whileTap={{ scale: 0.9 }}
-            onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            className="md:hidden p-2 text-white hover:text-[#FACC15] transition-colors"
-          >
-            {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-          </motion.button>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+              <Button
+                asChild
+                className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg shadow-[#FACC15]/50 hover:shadow-xl hover:shadow-[#FACC15]/70 transition-all duration-300 gap-2"
+              >
+                <Link to="/publier">
+                  <Sparkles className="w-4 h-4" />
+                  Publier mon vehicule
+                </Link>
+              </Button>
+            </motion.div>
+          </div>
+
+          {/* Right side (Mobile): User + Hamburger */}
+          <div className="md:hidden flex items-center gap-2">
+            {isAuthenticated ? (
+              <UserMenu />
+            ) : (
+              <Link                to="/connexion"
+                className="text-white hover:text-[#FACC15] transition-colors font-medium px-2 py-2"
+              >
+                Connexion
+              </Link>
+            )}
+
+            <motion.button
+              whileTap={{ scale: 0.9 }}
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="p-2 text-white hover:text-[#FACC15] transition-colors"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+            </motion.button>
+          </div>
         </div>
 
         {/* Mobile Menu */}
@@ -137,25 +156,29 @@ export function Header() {
                       <Link
                         to={item.path}
                         className="block py-3 px-4 text-white hover:text-[#FACC15] hover:bg-white/5 rounded-lg transition-all font-medium"
-                        onClick={() => setMobileMenuOpen(false)}
+                        onClick={closeMobile}
                       >
                         {item.label}
                       </Link>
                     </motion.div>
                   ))}
-                  <motion.div
-                    initial={{ opacity: 0, x: -20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    transition={{ delay: navItems.length * 0.1 }}
-                  >
-                    <Link
-                      to="/connexion"
-                      className="block py-3 px-4 text-white hover:text-[#FACC15] hover:bg-white/5 rounded-lg transition-all font-medium"
-                      onClick={() => setMobileMenuOpen(false)}
+
+                  {!isAuthenticated && (
+                    <motion.div
+                      initial={{ opacity: 0, x: -20 }}
+                      animate={{ opacity: 1, x: 0 }}
+                      transition={{ delay: navItems.length * 0.1 }}
                     >
-                      Connexion / Inscription
-                    </Link>
-                  </motion.div>
+                      <Link
+                        to="/connexion"
+                        className="block py-3 px-4 text-white hover:text-[#FACC15] hover:bg-white/5 rounded-lg transition-all font-medium"
+                        onClick={closeMobile}
+                      >
+                        Connexion / Inscription
+                      </Link>
+                    </motion.div>
+                  )}
+
                   <motion.div
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -165,9 +188,9 @@ export function Header() {
                       asChild
                       className="w-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] font-bold shadow-lg gap-2"
                     >
-                      <Link to="/publier" onClick={() => setMobileMenuOpen(false)}>
+                      <Link to="/publier" onClick={closeMobile}>
                         <Sparkles className="w-4 h-4" />
-                        Publier mon véhicule
+                        Publier mon vehicule
                       </Link>
                     </Button>
                   </motion.div>
