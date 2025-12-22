@@ -1,3 +1,4 @@
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { motion } from 'motion/react';
 import {
@@ -18,12 +19,35 @@ import {
 } from 'lucide-react';
 import { SearchBar } from '../components/SearchBar';
 import { VehicleCard } from '../components/VehicleCard';
-import { mockVehicles } from '../data/vehicles';
+import type { Vehicle } from '../data/vehicles';
+import { vehicleService } from '../../services/vehicle.service';
+import { toUiVehicleList } from '../utils/vehicleMapper';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 
 export function HomePage() {
-  const featuredVehicles = mockVehicles.slice(0, 6);
+  const [featuredVehicles, setFeaturedVehicles] = useState<Vehicle[]>([]);
+  const [featuredError, setFeaturedError] = useState('');
+  const [featuredLoading, setFeaturedLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setFeaturedLoading(true);
+      const res = await vehicleService.listVehicles({ limit: 6, sort: 'recent' });
+      if (cancelled) return;
+      if (res.success && res.vehicles) {
+        setFeaturedVehicles(toUiVehicleList(res.vehicles));
+        setFeaturedError('');
+      } else {
+        setFeaturedError(res.message || 'Impossible de charger les annonces');
+      }
+      setFeaturedLoading(false);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Animation variants
   const fadeInUp = {
@@ -83,32 +107,32 @@ export function HomePage() {
             {/* Premium Badge */}
             <motion.div variants={fadeInUp} className="inline-flex items-center gap-2 bg-white/10 backdrop-blur-lg border border-white/20 rounded-full px-6 py-2 mb-8">
               <Sparkles className="w-4 h-4 text-[#FACC15]" />
-              <span className="text-sm font-medium">Plateforme N°1 en Côte d'Ivoire</span>
+              <span className="text-sm font-medium">Plateforme NÂ°1 en CÃ´te d'Ivoire</span>
             </motion.div>
 
             <motion.h1
               variants={fadeInUp}
               className="text-5xl md:text-7xl lg:text-8xl mb-6 bg-gradient-to-r from-white via-white to-[#FACC15] bg-clip-text text-transparent font-[var(--font-poppins)] font-bold leading-tight"
             >
-              Trouvez le véhicule<br />de vos rêves
+              Trouvez le vÃ©hicule<br />de vos rÃªves
             </motion.h1>
 
             <motion.p
               variants={fadeInUp}
               className="text-xl md:text-2xl text-gray-300 max-w-3xl mx-auto mb-12 font-light"
             >
-              Des milliers d'annonces vérifiées. Achetez et vendez en toute confiance.
+              Des milliers d'annonces vÃ©rifiÃ©es. Achetez et vendez en toute confiance.
             </motion.p>
 
             {/* Trust Indicators */}
             <motion.div variants={fadeInUp} className="flex flex-wrap justify-center gap-8 mb-12">
               <div className="flex items-center gap-2">
                 <CheckCircle className="w-5 h-5 text-[#FACC15]" />
-                <span className="text-sm">Vendeurs vérifiés</span>
+                <span className="text-sm">Vendeurs vÃ©rifiÃ©s</span>
               </div>
               <div className="flex items-center gap-2">
                 <Shield className="w-5 h-5 text-[#FACC15]" />
-                <span className="text-sm">Paiements sécurisés</span>
+                <span className="text-sm">Paiements sÃ©curisÃ©s</span>
               </div>
               <div className="flex items-center gap-2">
                 <Award className="w-5 h-5 text-[#FACC15]" />
@@ -134,7 +158,7 @@ export function HomePage() {
           className="absolute bottom-8 left-1/2 -translate-x-1/2 text-white/60"
         >
           <div className="flex flex-col items-center gap-2">
-            <span className="text-sm">Découvrir</span>
+            <span className="text-sm">DÃ©couvrir</span>
             <div className="w-6 h-10 border-2 border-white/40 rounded-full flex items-start justify-center p-2">
               <motion.div
                 animate={{ y: [0, 12, 0] }}
@@ -158,7 +182,7 @@ export function HomePage() {
           >
             {[
               { icon: TrendingUp, value: '+1 000', label: 'Annonces actives', color: 'from-purple-500 to-pink-500' },
-              { icon: Users, value: '500+', label: 'Vendeurs vérifiés', color: 'from-blue-500 to-cyan-500' },
+              { icon: Users, value: '500+', label: 'Vendeurs vÃ©rifiÃ©s', color: 'from-blue-500 to-cyan-500' },
               { icon: Shield, value: '100%', label: 'Annonces auto', color: 'from-green-500 to-emerald-500' },
               { icon: Zap, value: '24/7', label: 'Support client', color: 'from-orange-500 to-yellow-500' }
             ].map((stat, index) => (
@@ -198,13 +222,13 @@ export function HomePage() {
           >
             <div className="inline-flex items-center gap-2 bg-[#FACC15]/10 border border-[#FACC15]/20 rounded-full px-6 py-2 mb-4">
               <Star className="w-4 h-4 text-[#FACC15]" />
-              <span className="text-sm font-medium text-[#0F172A]">Sélection Premium</span>
+              <span className="text-sm font-medium text-[#0F172A]">SÃ©lection Premium</span>
             </div>
             <h2 className="text-4xl md:text-6xl text-[#0F172A] mb-4 font-[var(--font-poppins)] font-bold">
-              Véhicules en vedette
+              VÃ©hicules en vedette
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Découvrez notre sélection exclusive de véhicules vérifiés et certifiés
+              DÃ©couvrez notre sÃ©lection exclusive de vÃ©hicules vÃ©rifiÃ©s et certifiÃ©s
             </p>
           </motion.div>
 
@@ -265,10 +289,10 @@ export function HomePage() {
               <span className="text-sm font-bold text-[#0F172A]">Vendeurs Professionnels</span>
             </div>
             <h2 className="text-4xl md:text-6xl text-white mb-6 font-[var(--font-poppins)] font-bold">
-              Développez votre activité
+              DÃ©veloppez votre activitÃ©
             </h2>
             <p className="text-gray-300 text-xl max-w-3xl mx-auto mb-12">
-              Rejoignez des centaines de vendeurs qui font confiance à annonceauto.ci pour vendre leurs véhicules rapidement
+              Rejoignez des centaines de vendeurs qui font confiance Ã  annonceauto.ci pour vendre leurs vÃ©hicules rapidement
             </p>
           </motion.div>
 
@@ -282,20 +306,20 @@ export function HomePage() {
             {[
               {
                 icon: UserCheck,
-                title: 'Créez votre compte',
+                title: 'CrÃ©ez votre compte',
                 description: 'Inscription rapide et gratuite en quelques secondes',
                 gradient: 'from-purple-500 to-pink-500'
               },
               {
                 icon: FileText,
                 title: 'Publiez vos annonces',
-                description: 'Ajoutez photos et détails de vos véhicules facilement',
+                description: 'Ajoutez photos et dÃ©tails de vos vÃ©hicules facilement',
                 gradient: 'from-blue-500 to-cyan-500'
               },
               {
                 icon: Phone,
                 title: 'Recevez des appels',
-                description: 'Les acheteurs intéressés vous contactent directement',
+                description: 'Les acheteurs intÃ©ressÃ©s vous contactent directement',
                 gradient: 'from-green-500 to-emerald-500'
               }
             ].map((step, index) => (
@@ -331,7 +355,7 @@ export function HomePage() {
             >
               <Link to="/publier" className="gap-2">
                 <Sparkles className="w-5 h-5" />
-                Créer mon compte vendeur
+                CrÃ©er mon compte vendeur
                 <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
               </Link>
             </Button>
@@ -350,10 +374,10 @@ export function HomePage() {
             className="text-center mb-16"
           >
             <h2 className="text-4xl md:text-6xl text-[#0F172A] mb-4 font-[var(--font-poppins)] font-bold">
-              Comment ça marche ?
+              Comment Ã§a marche ?
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Trouvez votre véhicule en 3 étapes simples
+              Trouvez votre vÃ©hicule en 3 Ã©tapes simples
             </p>
           </motion.div>
 
@@ -365,9 +389,9 @@ export function HomePage() {
             className="grid grid-cols-1 md:grid-cols-3 gap-8"
           >
             {[
-              { step: '01', title: 'Recherchez', description: 'Utilisez nos filtres pour trouver le véhicule qui correspond à vos critères', icon: '🔍' },
-              { step: '02', title: 'Comparez', description: 'Consultez les détails, photos et prix de chaque véhicule', icon: '⚖️' },
-              { step: '03', title: 'Contactez', description: 'Prenez contact avec le vendeur pour organiser une visite', icon: '📞' }
+              { step: '01', title: 'Recherchez', description: 'Utilisez nos filtres pour trouver le vÃ©hicule qui correspond Ã  vos critÃ¨res', icon: 'ðŸ”' },
+              { step: '02', title: 'Comparez', description: 'Consultez les dÃ©tails, photos et prix de chaque vÃ©hicule', icon: 'âš–ï¸' },
+              { step: '03', title: 'Contactez', description: 'Prenez contact avec le vendeur pour organiser une visite', icon: 'ðŸ“ž' }
             ].map((item, index) => (
               <motion.div key={index} variants={scaleIn}>
                 <div className="relative">
@@ -418,13 +442,13 @@ export function HomePage() {
           >
             <div className="inline-flex items-center gap-2 bg-[#FACC15]/10 border border-[#FACC15]/20 rounded-full px-6 py-2 mb-4">
               <Heart className="w-4 h-4 text-[#FACC15]" />
-              <span className="text-sm font-medium text-[#0F172A]">Témoignages</span>
+              <span className="text-sm font-medium text-[#0F172A]">TÃ©moignages</span>
             </div>
             <h2 className="text-4xl md:text-6xl text-[#0F172A] mb-4 font-[var(--font-poppins)] font-bold">
               Ils nous font confiance
             </h2>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              Découvrez les expériences de nos utilisateurs satisfaits
+              DÃ©couvrez les expÃ©riences de nos utilisateurs satisfaits
             </p>
           </motion.div>
 
@@ -439,14 +463,14 @@ export function HomePage() {
               {
                 name: 'Kouassi Jean',
                 role: 'Vendeur particulier',
-                text: "J'ai vendu ma voiture en moins d'une semaine grâce à annonceauto.ci. Interface simple et efficace !",
+                text: "J'ai vendu ma voiture en moins d'une semaine grÃ¢ce Ã  annonceauto.ci. Interface simple et efficace !",
                 avatar: 'KJ',
                 gradient: 'from-purple-500 to-pink-500'
               },
               {
                 name: 'Aya Mensah',
                 role: 'Acheteuse',
-                text: 'Plateforme professionnelle et sérieuse. J\'ai trouvé le SUV parfait pour ma famille.',
+                text: 'Plateforme professionnelle et sÃ©rieuse. J\'ai trouvÃ© le SUV parfait pour ma famille.',
                 avatar: 'AM',
                 gradient: 'from-blue-500 to-cyan-500'
               },
@@ -494,3 +518,4 @@ export function HomePage() {
     </div>
   );
 }
+

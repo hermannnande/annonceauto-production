@@ -1,4 +1,4 @@
-import { useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import {
   Calendar,
@@ -13,23 +13,79 @@ import {
   ChevronRight,
   User
 } from 'lucide-react';
-import { mockVehicles } from '../data/vehicles';
 import { VehicleCard } from '../components/VehicleCard';
 import { Button } from '../components/ui/button';
 import { Card } from '../components/ui/card';
 import { Badge } from '../components/ui/badge';
 import { WhatsAppIcon } from '../components/WhatsAppIcon';
+import { vehicleService } from '../../services/vehicle.service';
+import { toUiVehicle, toUiVehicleList } from '../utils/vehicleMapper';
+import type { Vehicle } from '../data/vehicles';
 
 export function VehicleDetailPage() {
   const { id } = useParams<{ id: string }>();
-  const vehicle = mockVehicles.find((v) => v.id === id);
+  const [vehicle, setVehicle] = useState<Vehicle | null>(null);
+  const [similarVehicles, setSimilarVehicles] = useState<Vehicle[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [loadError, setLoadError] = useState('');
   const [currentImageIndex, setCurrentImageIndex] = useState(0);
+
+  useEffect(() => {
+    if (!id) return;
+    let cancelled = false;
+
+    (async () => {
+      setIsLoading(true);
+      setLoadError('');
+      setSimilarVehicles([]);
+      setCurrentImageIndex(0);
+
+      const numericId = parseInt(id, 10);
+      const res = await vehicleService.getVehicleById(Number.isFinite(numericId) ? numericId : 0);
+
+      if (cancelled) return;
+
+      if (!res.success || !res.vehicle) {
+        setVehicle(null);
+        setLoadError(res.message || 'Annonce introuvable');
+        setIsLoading(false);
+        return;
+      }
+
+      const ui = toUiVehicle(res.vehicle);
+      setVehicle(ui);
+
+      // charger quelques annonces similaires (meme marque)
+      const listRes = await vehicleService.listVehicles({ marque: res.vehicle.marque, limit: 6, sort: 'recent' });
+      if (!cancelled && listRes.success && listRes.vehicles) {
+        const listUi = toUiVehicleList(listRes.vehicles).filter((v) => v.id !== ui.id).slice(0, 3);
+        setSimilarVehicles(listUi);
+      }
+
+      setIsLoading(false);
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [id]);
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="text-center">
+          <p className="text-gray-600">Chargement...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!vehicle) {
     return (
       <div className="min-h-screen flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-3xl text-[#0F172A] mb-4">Véhicule non trouvé</h1>
+          <h1 className="text-3xl text-[#0F172A] mb-4">Annonce non trouvee</h1>
+          {loadError && <p className="text-sm text-red-600 mb-3">{loadError}</p>}
           <Link to="/annonces" className="text-[#FACC15] hover:underline">
             Retour aux annonces
           </Link>
@@ -37,10 +93,6 @@ export function VehicleDetailPage() {
       </div>
     );
   }
-
-  const similarVehicles = mockVehicles
-    .filter((v) => v.id !== vehicle.id && v.brand === vehicle.brand)
-    .slice(0, 3);
 
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('fr-FR').format(price) + ' FCFA';
@@ -75,17 +127,17 @@ export function VehicleDetailPage() {
     return condition === 'Neuf' ? 'bg-blue-500 text-white' : 'bg-gray-500 text-white';
   };
 
-  // Fonction pour générer le lien WhatsApp avec message pré-rempli
+  // Fonction pour gÃ©nÃ©rer le lien WhatsApp avec message prÃ©-rempli
   const getWhatsAppLink = () => {
     const currentUrl = window.location.href;
-    const message = `Bonjour,\n\nJe suis intéressé(e) par votre annonce :\n🚗 ${vehicle.brand} ${vehicle.model} (${vehicle.year})\n💰 ${formatPrice(vehicle.price)}\n\nVoici le lien de l'annonce :\n${currentUrl}\n\nPouvez-vous me donner plus d'informations ?\n\nMerci !`;
+    const message = `Bonjour,\n\nJe suis intÃ©ressÃ©(e) par votre annonce :\nðŸš— ${vehicle.brand} ${vehicle.model} (${vehicle.year})\nðŸ’° ${formatPrice(vehicle.price)}\n\nVoici le lien de l'annonce :\n${currentUrl}\n\nPouvez-vous me donner plus d'informations ?\n\nMerci !`;
     
     // Encodage du message pour l'URL
     const encodedMessage = encodeURIComponent(message);
     
-    // Numéro de téléphone du vendeur (format international sans +)
-    // Pour l'exemple, utilisons un numéro fictif - à remplacer par le vrai numéro du vendeur
-    const phoneNumber = '2250708000000'; // Format: Code pays (225) + numéro
+    // NumÃ©ro de tÃ©lÃ©phone du vendeur (format international sans +)
+    // Pour l'exemple, utilisons un numÃ©ro fictif - Ã  remplacer par le vrai numÃ©ro du vendeur
+    const phoneNumber = '2250708000000'; // Format: Code pays (225) + numÃ©ro
     
     return `https://wa.me/${phoneNumber}?text=${encodedMessage}`;
   };
@@ -196,7 +248,7 @@ export function VehicleDetailPage() {
                 
                 {/* Subtitle with year */}
                 <p className="text-gray-500 mb-6 flex items-center gap-2">
-                  <span className="text-sm">Année {vehicle.year}</span>
+                  <span className="text-sm">AnnÃ©e {vehicle.year}</span>
                   <span className="w-1 h-1 bg-gray-400 rounded-full" />
                   <span className="text-sm">{vehicle.location}</span>
                 </p>
@@ -221,7 +273,7 @@ export function VehicleDetailPage() {
                         <Calendar className="w-5 h-5 md:w-6 md:h-6 text-[#FACC15]" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] md:text-xs font-semibold text-gray-400 mb-1 md:mb-1.5 uppercase tracking-wider">Année</p>
+                        <p className="text-[10px] md:text-xs font-semibold text-gray-400 mb-1 md:mb-1.5 uppercase tracking-wider">AnnÃ©e</p>
                         <p className="text-base md:text-2xl font-bold text-[#0F172A]">{vehicle.year}</p>
                       </div>
                     </div>
@@ -234,7 +286,7 @@ export function VehicleDetailPage() {
                         <Gauge className="w-5 h-5 md:w-6 md:h-6 text-blue-500" />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[10px] md:text-xs font-semibold text-gray-400 mb-1 md:mb-1.5 uppercase tracking-wider">Kilométrage</p>
+                        <p className="text-[10px] md:text-xs font-semibold text-gray-400 mb-1 md:mb-1.5 uppercase tracking-wider">KilomÃ©trage</p>
                         <p className="text-sm md:text-xl font-bold text-[#0F172A]">{vehicle.mileage.toLocaleString('fr-FR')} km</p>
                       </div>
                     </div>
@@ -279,22 +331,22 @@ export function VehicleDetailPage() {
 
             {/* Technical Details */}
             <Card className="p-6">
-              <h2 className="text-2xl text-[#0F172A] mb-4">Détails techniques</h2>
+              <h2 className="text-2xl text-[#0F172A] mb-4">DÃ©tails techniques</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="flex justify-between py-3 border-b">
                   <span className="text-gray-600">Marque</span>
                   <span>{vehicle.brand}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b">
-                  <span className="text-gray-600">Modèle</span>
+                  <span className="text-gray-600">ModÃ¨le</span>
                   <span>{vehicle.model}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b">
-                  <span className="text-gray-600">Année</span>
+                  <span className="text-gray-600">AnnÃ©e</span>
                   <span>{vehicle.year}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b">
-                  <span className="text-gray-600">Kilométrage</span>
+                  <span className="text-gray-600">KilomÃ©trage</span>
                   <span>{vehicle.mileage.toLocaleString('fr-FR')} km</span>
                 </div>
                 <div className="flex justify-between py-3 border-b">
@@ -318,7 +370,7 @@ export function VehicleDetailPage() {
                   </div>
                 )}
                 <div className="flex justify-between py-3 border-b">
-                  <span className="text-gray-600">État</span>
+                  <span className="text-gray-600">Ã‰tat</span>
                   <span>{vehicle.condition}</span>
                 </div>
                 <div className="flex justify-between py-3 border-b">
@@ -385,7 +437,7 @@ export function VehicleDetailPage() {
               {/* Safety Tips */}
               <Card className="p-6">
                 <h3 className="text-lg text-[#0F172A] mb-4">
-                  Conseils de sécurité
+                  Conseils de sÃ©curitÃ©
                 </h3>
                 <ul className="space-y-3 text-sm text-gray-600">
                   <li className="flex gap-2">
@@ -394,7 +446,7 @@ export function VehicleDetailPage() {
                   </li>
                   <li className="flex gap-2">
                     <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span>Vérifiez les documents du véhicule</span>
+                    <span>VÃ©rifiez les documents du vÃ©hicule</span>
                   </li>
                   <li className="flex gap-2">
                     <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
@@ -402,7 +454,7 @@ export function VehicleDetailPage() {
                   </li>
                   <li className="flex gap-2">
                     <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0" />
-                    <span>Ne payez jamais sans avoir vu le véhicule</span>
+                    <span>Ne payez jamais sans avoir vu le vÃ©hicule</span>
                   </li>
                 </ul>
               </Card>
@@ -413,7 +465,7 @@ export function VehicleDetailPage() {
         {/* Similar Vehicles */}
         {similarVehicles.length > 0 && (
           <div className="mt-16">
-            <h2 className="text-3xl text-[#0F172A] mb-8">Véhicules similaires</h2>
+            <h2 className="text-3xl text-[#0F172A] mb-8">VÃ©hicules similaires</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {similarVehicles.map((vehicle) => (
                 <VehicleCard key={vehicle.id} vehicle={vehicle} />
