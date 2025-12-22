@@ -300,34 +300,116 @@ export function VendorSettings() {
         )}
 
         {activeTab === 'notifications' && (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <Card className="p-6">
-              <h3 className="text-xl font-bold text-[#0F172A] mb-4">Preferences de notification</h3>
-              <p className="text-gray-600 mb-6">Maquette: la sauvegarde n'est pas encore implementee.</p>
-              <div className="flex justify-end">
-                <Button onClick={handleSaveNotImplemented} className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] font-bold px-8">
-                  <Save className="w-4 h-4 mr-2" />
-                  Enregistrer
-                </Button>
-              </div>
-            </Card>
-          </motion.div>
-        )}
+  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+    <Card className="p-6">
+      <h3 className="text-xl font-bold text-[#0F172A] mb-6">PrÃ©fÃ©rences de notification</h3>
+      <div className="space-y-6">
+        {[
+          { key: 'newViews', title: 'Nouvelles vues', desc: 'Recevoir une notification quand quelquâ€™un consulte vos annonces' },
+          { key: 'newFavorites', title: 'Nouveaux favoris', desc: 'ÃŠtre notifiÃ© quand un utilisateur ajoute votre annonce en favori' },
+          { key: 'messages', title: 'Messages', desc: 'Recevoir les messages des acheteurs potentiels' },
+          { key: 'moderation', title: 'ModÃ©ration', desc: 'ÃŠtre informÃ© du statut de validation de vos annonces' },
+          { key: 'boostExpiry', title: 'Boost expirÃ©', desc: 'Notification quand un boost arrive Ã  expiration' },
+          { key: 'lowCredits', title: 'CrÃ©dits faibles', desc: 'Alerte quand votre solde de crÃ©dits est faible' },
+        ].map((item) => (
+          <div key={item.key} className="flex items-center justify-between pb-6 border-b border-gray-100 last:border-0">
+            <div>
+              <p className="font-medium text-gray-900">{item.title}</p>
+              <p className="text-sm text-gray-500 mt-1">{item.desc}</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={notificationPrefs[item.key as keyof typeof notificationPrefs]}
+                onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, [item.key]: e.target.checked }))}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#FACC15]/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#FACC15]"></div>
+            </label>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <Button
+          onClick={handleSaveNotifications}
+          disabled={isLoading}
+          className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] hover:from-[#FBBF24] hover:to-[#F59E0B] text-[#0F172A] font-bold px-8 disabled:opacity-50"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Enregistrement...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              Enregistrer
+            </>
+          )}
+        </Button>
+      </div>
+    </Card>
+  </motion.div>
+)}
 
         {activeTab === 'security' && (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <Card className="p-6">
-              <h3 className="text-xl font-bold text-[#0F172A] mb-4">Securite</h3>
-              <p className="text-gray-600 mb-6">Maquette: changement de mot de passe non branche.</p>
-              <div className="flex justify-end">
-                <Button onClick={handleSaveNotImplemented} className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] font-bold px-8">
-                  <Lock className="w-4 h-4 mr-2" />
-                  Enregistrer
-                </Button>
-              </div>
-            </Card>
-          </motion.div>
-        )}
+  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+    <Card className="p-6">
+      <h3 className="text-xl font-bold text-[#0F172A] mb-6">SÃ©curitÃ©</h3>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe actuel</label>
+          <input
+            type="password"
+            value={passwordData.currentPassword}
+            onChange={(e) => setPasswordData((prev) => ({ ...prev, currentPassword: e.target.value }))}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FACC15] focus:border-transparent transition-all"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Nouveau mot de passe</label>
+          <input
+            type="password"
+            value={passwordData.newPassword}
+            onChange={(e) => setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FACC15] focus:border-transparent transition-all"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Confirmer le nouveau mot de passe</label>
+          <input
+            type="password"
+            value={passwordData.confirmPassword}
+            onChange={(e) => setPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FACC15] focus:border-transparent transition-all"
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <Button
+          onClick={handleChangePassword}
+          disabled={isLoading}
+          className="bg-gradient-to-r from-[#FACC15] to-[#FBBF24] hover:from-[#FBBF24] hover:to-[#F59E0B] text-[#0F172A] font-bold px-8 disabled:opacity-50"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Changement...
+            </>
+          ) : (
+            <>
+              <Lock className="w-4 h-4 mr-2" />
+              Changer le mot de passe
+            </>
+          )}
+        </Button>
+      </div>
+    </Card>
+  </motion.div>
+)}
 
         {activeTab === 'business' && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>

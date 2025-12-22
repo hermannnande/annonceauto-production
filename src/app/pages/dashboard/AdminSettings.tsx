@@ -287,34 +287,129 @@ export function AdminSettings() {
         )}
 
         {activeTab === 'notifications' && (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <Card className="p-6">
-              <h3 className="text-xl font-bold text-[#0F172A] mb-4">Notifications</h3>
-              <p className="text-gray-600 mb-6">Maquette: la sauvegarde n'est pas encore implementee.</p>
-              <div className="flex justify-end">
-                <Button onClick={handleSaveNotImplemented} className="bg-gradient-to-r from-[#0F172A] to-[#1e293b] text-white font-bold px-8">
-                  <Save className="w-4 h-4 mr-2" />
-                  Enregistrer
-                </Button>
-              </div>
-            </Card>
-          </motion.div>
-        )}
+  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
+    <Card className="p-6">
+      <h3 className="text-xl font-bold text-[#0F172A] mb-6">PrÃ©fÃ©rences de notification</h3>
+      <div className="space-y-6">
+        {[
+          { key: 'newListings', title: 'Nouvelles annonces', desc: 'Notification pour chaque nouvelle annonce en attente' },
+          { key: 'reports', title: 'Signalements', desc: 'ÃŠtre alertÃ© des signalements d\'utilisateurs' },
+          { key: 'payments', title: 'Paiements', desc: 'Notification des nouveaux paiements Mobile Money' },
+          { key: 'dailyReports', title: 'Rapports quotidiens', desc: 'Recevoir un rÃ©sumÃ© quotidien des activitÃ©s' },
+          { key: 'creditsAssigned', title: 'CrÃ©dits attribuÃ©s', desc: 'Notification quand des crÃ©dits sont attribuÃ©s manuellement' },
+          { key: 'systemAlerts', title: 'Alertes systÃ¨me', desc: 'Recevoir les alertes critiques de la plateforme' },
+        ].map((item) => (
+          <div key={item.key} className="flex items-center justify-between pb-6 border-b border-gray-100 last:border-0">
+            <div>
+              <p className="font-medium text-gray-900">{item.title}</p>
+              <p className="text-sm text-gray-500 mt-1">{item.desc}</p>
+            </div>
+            <label className="relative inline-flex items-center cursor-pointer">
+              <input
+                type="checkbox"
+                checked={notificationPrefs[item.key as keyof typeof notificationPrefs]}
+                onChange={(e) => setNotificationPrefs((prev) => ({ ...prev, [item.key]: e.target.checked }))}
+                className="sr-only peer"
+              />
+              <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-[#0F172A]/20 rounded-full peer peer-checked:after:translate-x-full rtl:peer-checked:after:-translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:start-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#0F172A]"></div>
+            </label>
+          </div>
+        ))}
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <Button
+          onClick={handleSaveNotifications}
+          disabled={isLoading}
+          className="bg-gradient-to-r from-[#0F172A] to-[#1e293b] hover:from-[#1e293b] hover:to-[#0F172A] text-white font-bold px-8 disabled:opacity-50"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Enregistrement...
+            </>
+          ) : (
+            <>
+              <Save className="w-4 h-4 mr-2" />
+              Enregistrer
+            </>
+          )}
+        </Button>
+      </div>
+    </Card>
+  </motion.div>
+)}
 
         {activeTab === 'security' && (
-          <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
-            <Card className="p-6">
-              <h3 className="text-xl font-bold text-[#0F172A] mb-4">Securite</h3>
-              <p className="text-gray-600 mb-6">Maquette: changement de mot de passe / 2FA non branches.</p>
-              <div className="flex justify-end">
-                <Button onClick={handleSaveNotImplemented} className="bg-gradient-to-r from-[#0F172A] to-[#1e293b] text-white font-bold px-8">
-                  <Lock className="w-4 h-4 mr-2" />
-                  Enregistrer
-                </Button>
-              </div>
-            </Card>
-          </motion.div>
-        )}
+  <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="space-y-6">
+    <Card className="p-6">
+      <h3 className="text-xl font-bold text-[#0F172A] mb-6">Changer le mot de passe</h3>
+
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Mot de passe actuel</label>
+          <input
+            type="password"
+            value={passwordData.currentPassword}
+            onChange={(e) => setPasswordData((prev) => ({ ...prev, currentPassword: e.target.value }))}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0F172A] focus:border-transparent transition-all"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Nouveau mot de passe</label>
+          <input
+            type="password"
+            value={passwordData.newPassword}
+            onChange={(e) => setPasswordData((prev) => ({ ...prev, newPassword: e.target.value }))}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0F172A] focus:border-transparent transition-all"
+          />
+        </div>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-2">Confirmer le nouveau mot de passe</label>
+          <input
+            type="password"
+            value={passwordData.confirmPassword}
+            onChange={(e) => setPasswordData((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+            className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#0F172A] focus:border-transparent transition-all"
+          />
+        </div>
+      </div>
+
+      <div className="mt-6 flex justify-end">
+        <Button
+          onClick={handleChangePassword}
+          disabled={isLoading}
+          className="bg-gradient-to-r from-[#0F172A] to-[#1e293b] hover:from-[#1e293b] hover:to-[#0F172A] text-white font-bold px-8 disabled:opacity-50"
+        >
+          {isLoading ? (
+            <>
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+              Changement...
+            </>
+          ) : (
+            <>
+              <Lock className="w-4 h-4 mr-2" />
+              Changer le mot de passe
+            </>
+          )}
+        </Button>
+      </div>
+    </Card>
+
+    <Card className="p-6">
+      <div className="flex items-start justify-between">
+        <div>
+          <h3 className="text-xl font-bold text-[#0F172A] mb-2">Authentification Ã  deux facteurs</h3>
+          <p className="text-gray-600">Maquette: 2FA pas encore branchÃ©e.</p>
+        </div>
+        <Button onClick={handleSaveNotImplemented} variant="outline" className="border-[#0F172A] text-[#0F172A] hover:bg-[#0F172A] hover:text-white">
+          <Shield className="w-4 h-4 mr-2" />
+          Activer
+        </Button>
+      </div>
+    </Card>
+  </motion.div>
+)}
 
         {activeTab === 'platform' && (
           <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }}>
