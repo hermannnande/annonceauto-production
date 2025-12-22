@@ -4,10 +4,8 @@ import helmet from 'helmet';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 
-// Charger les variables d'environnement
 dotenv.config();
 
-// Importer les routes
 import authRoutes from './src/routes/auth.routes.js';
 import vehicleRoutes from './src/routes/vehicle.routes.js';
 import creditRoutes from './src/routes/credit.routes.js';
@@ -18,26 +16,47 @@ import uploadRoutes from './src/routes/upload.routes.js';
 const app = express();
 const PORT = process.env.PORT || 5000;
 
-// Middleware de sécurité
+// Railway/Reverse proxy: required for express-rate-limit when X-Forwarded-For is set
+app.set('trust proxy', 1);
+
+// Security headers
 app.use(helmet());
 
-// CORS - Autoriser toutes les origines (temporaire pour debug)
-app.use(cors({
-  origin: '*',
-  credentials: true
-}));
+// CORS
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://localhost:3000',
+  'https://annonceauto.vercel.app',
+  'https://voitureoccasion.vercel.app',
+  'https://annonceauto-production.vercel.app',
+  process.env.FRONTEND_URL,
+].filter(Boolean);
 
-// Rate limiting - Protection contre les attaques
+app.use(
+  cors({
+    origin: (origin, callback) => {
+      // allow non-browser requests (curl, server-to-server)
+      if (!origin) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(null, false);
+    },
+    credentials: true,
+  })
+);
+
+// Rate limiting - basic protection
 const limiter = rateLimit({
   windowMs: 15 * 60 * 1000, // 15 minutes
-  max: 100, // Max 100 requêtes par IP
-  message: 'Trop de requêtes, réessayez plus tard.'
+  max: 100,
+  standardHeaders: true,
+  legacyHeaders: false,
+  message: { error: 'Too many requests, please try again later.' },
 });
 app.use('/api/', limiter);
 
-// Parser JSON
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// Body parsers
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 
 // Routes API
 app.use('/api/auth', authRoutes);
@@ -47,10 +66,10 @@ app.use('/api/payments', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
 
-// Route de test
+// Root/health
 app.get('/', (req, res) => {
   res.json({
-    message: '🚗 AnnonceAuto.ci API',
+    message: 'AnnonceAuto.ci API',
     version: '1.0.0',
     status: 'online',
     endpoints: {
@@ -59,69 +78,84 @@ app.get('/', (req, res) => {
       credits: '/api/credits',
       payments: '/api/payments',
       users: '/api/users',
-      upload: '/api/upload'
-    }
+      upload: '/api/upload',
+    },
   });
 });
 
-// Route de santé
 app.get('/health', (req, res) => {
   res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-// Route de test de la base de données
+// Test DB (kept for debugging)
 app.get('/api/test-db', async (req, res) => {
   try {
     const { query } = await import('./src/config/database.js');
-    const result = await query('SELECT COUNT(*) as count FROM users');
-    res.json({ 
-      success: true, 
-      message: 'Base de données OK',
-      users_count: result.rows[0].count 
-    });
+    const result = await query('SELECT NOW()');
+    res.json({ success: true, message: 'Database OK', now: result.rows?.[0]?.now });
   } catch (error) {
-    res.status(500).json({ 
-      success: false, 
-      error: error.message,
-      stack: error.stack
-    });
+    res.status(500).json({ success: false, error: error.message });
   }
 });
 
-// Gestion des erreurs 404
-app.use((req, res) => {
-  res.status(404).json({
-    error: 'Route non trouvée',
-    path: req.path
-  });
-});
-
-// Gestion globale des erreurs
-app.use((err, req, res, next) => {
-  console.error('Erreur:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Erreur serveur interne',
-    ...(process.env.NODE_ENV === 'development' && { stack: err.stack })
-  });
-});
-
-// Démarrer le serveur
-app.listen(PORT, async () => {
-  console.log(`🚀 Serveur démarré sur le port ${PORT}`);
-  console.log(`📍 http://localhost:${PORT}`);
-  console.log(`🌍 Environnement: ${process.env.NODE_ENV}`);
-  
-  // Test de connexion à la base de données
+// Ensure super admin exists (best-effort)
+async function createSuperAdmin() {
   try {
     const { query } = await import('./src/config/database.js');
-    await query('SELECT NOW()');
-    console.log('✅ Base de données connectée !');
+
+    const adminEmail = 'hermannnande@gmail.com';
+    const hashedPassword = '$2a$10$XLMUFLdE30tgVbhmoejpxONmWybZTU/T25cAkLSK8oQEYViawy8Cm'; // Nande19912012.
+
+    const existing = await query('SELECT id FROM users WHERE email = $1', [adminEmail]);
+
+    const tryRole = async (role) => {
+      if (existing.rows.length === 0) {
+        await query(
+          `INSERT INTO users (email, password, nom, prenom, telephone, role, credits, verified, created_at)
+           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+          [adminEmail, hashedPassword, 'nande', 'hermann', '+2250778030075', role, 1000, true]
+        );
+      } else {
+        await query(
+          'UPDATE users SET password = $1, role = $2, verified = $3, credits = $4 WHERE email = $5',
+          [hashedPassword, role, true, 1000, adminEmail]
+        );
+      }
+    };
+
+    try {
+      await tryRole('super_admin');
+    } catch {
+      // fallback if DB constraint does not allow super_admin
+      await tryRole('admin');
+    }
+
+    console.log('SUPER_ADMIN ensured:', adminEmail);
   } catch (error) {
-    console.error('❌ Erreur de connexion à la base de données:', error.message);
-    console.error('DATABASE_URL:', process.env.DATABASE_URL ? 'définie' : 'NON définie');
+    console.log('SUPER_ADMIN init skipped:', error.message);
   }
+}
+
+// 404
+app.use((req, res) => {
+  res.status(404).json({ error: 'Route not found', path: req.path });
+});
+
+// Global error handler
+app.use((err, req, res, next) => {
+  console.error('Server error:', err);
+  res.status(err.status || 500).json({
+    error: err.message || 'Internal server error',
+    ...(process.env.NODE_ENV === 'development' && { stack: err.stack }),
+  });
+});
+
+// Start
+app.listen(PORT, '0.0.0.0', async () => {
+  console.log(`Server started on port ${PORT}`);
+  console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
+
+  await createSuperAdmin();
 });
 
 export default app;
-
-
