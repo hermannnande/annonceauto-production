@@ -1,4 +1,5 @@
-import { useState } from 'react';
+﻿import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   ArrowRight,
@@ -25,11 +26,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Textarea } from '../components/ui/textarea';
 import { Card } from '../components/ui/card';
 import { ImageUpload } from '../components/ImageUpload';
+import { useAuth } from '../../hooks/useAuth';
+import { vehicleService } from '../../services/vehicle.service';
 
-// Liste complète des marques de véhicules
+// Liste complÃ¨te des marques de vÃ©hicules
 const CAR_BRANDS = [
   'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Bugatti', 'Buick',
-  'Cadillac', 'Chevrolet', 'Chrysler', 'Citroën', 'Dacia', 'Daewoo', 'Daihatsu', 'Dodge',
+  'Cadillac', 'Chevrolet', 'Chrysler', 'CitroÃ«n', 'Dacia', 'Daewoo', 'Daihatsu', 'Dodge',
   'Ferrari', 'Fiat', 'Ford', 'Genesis', 'GMC', 'Honda', 'Hummer', 'Hyundai',
   'Infiniti', 'Isuzu', 'Jaguar', 'Jeep', 'Kia', 'Lamborghini', 'Land Rover', 'Lexus',
   'Lincoln', 'Lotus', 'Maserati', 'Mazda', 'McLaren', 'Mercedes-Benz', 'Mini', 'Mitsubishi',
@@ -39,9 +42,13 @@ const CAR_BRANDS = [
 ].sort();
 
 export function PublishPage() {
+  const navigate = useNavigate();
+  const { isAuthenticated, refreshUser } = useAuth();
   const [currentStep, setCurrentStep] = useState(0);
   const [brandSearch, setBrandSearch] = useState('');
   const [showOtherBrand, setShowOtherBrand] = useState(false);
+  const [submitError, setSubmitError] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [formData, setFormData] = useState({
     // Step 1: Vehicle Info
     brand: '',
@@ -69,15 +76,15 @@ export function PublishPage() {
   const steps = [
     {
       id: 0,
-      title: 'Informations du véhicule',
+      title: 'Informations du vÃ©hicule',
       subtitle: 'Les bases de votre annonce',
       icon: Car,
       gradient: 'from-purple-500 to-pink-500'
     },
     {
       id: 1,
-      title: 'Détails techniques',
-      subtitle: 'Caractéristiques complètes',
+      title: 'DÃ©tails techniques',
+      subtitle: 'CaractÃ©ristiques complÃ¨tes',
       icon: Settings,
       gradient: 'from-blue-500 to-cyan-500'
     },
@@ -90,7 +97,7 @@ export function PublishPage() {
     },
     {
       id: 3,
-      title: 'Photos du véhicule',
+      title: 'Photos du vÃ©hicule',
       subtitle: 'Valorisez votre annonce',
       icon: ImageIcon,
       gradient: 'from-orange-500 to-yellow-500'
@@ -100,7 +107,7 @@ export function PublishPage() {
   const updateFormData = (field: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Si "Autre" est sélectionné, afficher le champ personnalisé
+    // Si "Autre" est sÃ©lectionnÃ©, afficher le champ personnalisÃ©
     if (field === 'brand' && value === 'Autre') {
       setShowOtherBrand(true);
     } else if (field === 'brand') {
@@ -116,14 +123,15 @@ export function PublishPage() {
   // Validation par step
   const isStepValid = (step: number): boolean => {
     switch (step) {
-      case 0: // Step 1: Informations du véhicule
+      case 0: // Step 1: Informations du vÃ©hicule
         return !!(
           formData.brand &&
-          (formData.brand !== 'autre' || formData.customBrand) &&
+          (formData.brand !== 'Autre' || formData.customBrand) &&
+          formData.model &&
           formData.year &&
           formData.condition
         );
-      case 1: // Step 2: Détails techniques
+      case 1: // Step 2: DÃ©tails techniques
         return !!(
           formData.mileage &&
           formData.transmission &&
@@ -160,9 +168,83 @@ export function PublishPage() {
     }
   };
 
-  const handleSubmit = () => {
-    console.log('Form submitted:', formData);
-    // Handle form submission
+  const handleSubmit = async () => {
+    setSubmitError('');
+
+    if (!isAuthenticated) {
+      setSubmitError('Vous devez etre connecte pour publier une annonce.');
+      setTimeout(() => navigate('/connexion'), 800);
+      return;
+    }
+
+    // Valider tous les steps avant envoi
+    const canPublish =
+      isStepValid(0) &&
+      isStepValid(1) &&
+      isStepValid(2) &&
+      isStepValid(3);
+
+    if (!canPublish) {
+      setSubmitError('Veuillez completer tous les champs requis et uploader au moins une photo.');
+      return;
+    }
+
+    const allImagesAreRemote = formData.images.every((u) => /^https?:\/\//i.test(u));
+    if (!allImagesAreRemote) {
+      setSubmitError("Veuillez attendre la fin de l'upload des photos avant de publier.");
+      return;
+    }
+
+    const marque = (formData.brand === 'Autre' ? formData.customBrand : formData.brand).trim();
+    if (!marque) {
+      setSubmitError('Marque requise.');
+      return;
+    }
+
+    const transmission = formData.transmission === 'automatic' ? 'automatique' : 'manuelle';
+
+    setIsSubmitting(true);
+    try {
+      const [ville, commune] = formData.location
+        .split(',')
+        .map((s) => s.trim())
+        .filter(Boolean);
+
+      const res = await vehicleService.createVehicle({
+        titre: `${marque} ${formData.model} ${formData.year}`.trim(),
+        marque,
+        modele: formData.model,
+        annee: parseInt(formData.year, 10),
+        prix: parseInt(formData.price, 10),
+        kilometrage: formData.mileage,
+        carburant: formData.fuel,
+        transmission,
+        couleur: formData.color,
+        description: formData.description,
+        ville: ville || formData.location,
+        commune: commune || undefined,
+        images: formData.images,
+      });
+
+      if (!res.success || !res.vehicle?.id) {
+        setSubmitError(res.message || 'Erreur lors de la publication');
+        return;
+      }
+
+      // Rafraichir le profil (credits, etc.) sans bloquer la redirection
+      try {
+        await refreshUser();
+      } catch {
+        // ignore
+      }
+
+      // Rediriger vers l'annonce
+      navigate(`/annonces/${res.vehicle.id}`);
+    } catch (err: any) {
+      setSubmitError(err?.message || 'Erreur lors de la publication');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -176,14 +258,14 @@ export function PublishPage() {
         >
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] rounded-full px-6 py-2 mb-6 shadow-lg">
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-bold">Publication Guidée</span>
+            <span className="text-sm font-bold">Publication GuidÃ©e</span>
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold mb-4 font-[var(--font-poppins)] bg-gradient-to-r from-[#0F172A] via-[#1e293b] to-[#0F172A] bg-clip-text text-transparent">
             Publiez votre annonce
           </h1>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Vendez votre véhicule rapidement avec notre processus simple et efficace
+            Vendez votre vÃ©hicule rapidement avec notre processus simple et efficace
           </p>
         </motion.div>
 
@@ -260,8 +342,8 @@ export function PublishPage() {
                       <Car className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Informations du véhicule</h2>
-                      <p className="text-gray-500">Commençons par les informations essentielles</p>
+                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Informations du vÃ©hicule</h2>
+                      <p className="text-gray-500">CommenÃ§ons par les informations essentielles</p>
                     </div>
                   </div>
 
@@ -276,7 +358,7 @@ export function PublishPage() {
                         onValueChange={(value) => updateFormData('brand', value)}
                       >
                         <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
-                          <SelectValue placeholder="Sélectionnez la marque" />
+                          <SelectValue placeholder="SÃ©lectionnez la marque" />
                         </SelectTrigger>
                         <SelectContent>
                           {/* Barre de recherche */}
@@ -290,19 +372,19 @@ export function PublishPage() {
                             />
                           </div>
                           {filteredBrands.map((brandName) => (
-                            <SelectItem key={brandName} value={brandName.toLowerCase()}>
+                            <SelectItem key={brandName} value={brandName}>
                               {brandName}
                             </SelectItem>
                           ))}
                           {filteredBrands.length === 0 && (
                             <div className="px-2 py-4 text-sm text-gray-500 text-center">
-                              Aucune marque trouvée
+                              Aucune marque trouvÃ©e
                             </div>
                           )}
                         </SelectContent>
                       </Select>
                       
-                      {/* Champ personnalisé si "Autre" sélectionné */}
+                      {/* Champ personnalisÃ© si "Autre" sÃ©lectionnÃ© */}
                       {showOtherBrand && (
                         <motion.div
                           initial={{ opacity: 0, height: 0 }}
@@ -322,10 +404,10 @@ export function PublishPage() {
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <span className="w-2 h-2 bg-[#FACC15] rounded-full" />
-                        Modèle
+                        ModÃ¨le
                       </Label>
                       <Input
-                        placeholder="Ex: Camry, Série 5..."
+                        placeholder="Ex: Camry, SÃ©rie 5..."
                         value={formData.model}
                         onChange={(e) => updateFormData('model', e.target.value)}
                         className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12"
@@ -335,11 +417,11 @@ export function PublishPage() {
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <Calendar className="w-4 h-4 text-[#FACC15]" />
-                        Année *
+                        AnnÃ©e *
                       </Label>
                       <Select value={formData.year} onValueChange={(value) => updateFormData('year', value)}>
                         <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
-                          <SelectValue placeholder="Année du véhicule" />
+                          <SelectValue placeholder="AnnÃ©e du vÃ©hicule" />
                         </SelectTrigger>
                         <SelectContent>
                           {Array.from({ length: 28 }, (_, i) => 2025 - i).map(year => (
@@ -352,11 +434,11 @@ export function PublishPage() {
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <Shield className="w-4 h-4 text-[#FACC15]" />
-                        État *
+                        Ã‰tat *
                       </Label>
                       <Select value={formData.condition} onValueChange={(value) => updateFormData('condition', value)}>
                         <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
-                          <SelectValue placeholder="État du véhicule" />
+                          <SelectValue placeholder="Ã‰tat du vÃ©hicule" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="new">Neuf</SelectItem>
@@ -373,7 +455,7 @@ export function PublishPage() {
                       <div>
                         <p className="font-medium text-blue-900">Conseil Pro</p>
                         <p className="text-sm text-blue-700">
-                          Soyez précis dans vos informations. Plus votre annonce est détaillée, plus vous attirez d'acheteurs sérieux.
+                          Soyez prÃ©cis dans vos informations. Plus votre annonce est dÃ©taillÃ©e, plus vous attirez d'acheteurs sÃ©rieux.
                         </p>
                       </div>
                     </div>
@@ -389,8 +471,8 @@ export function PublishPage() {
                       <Settings className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Détails techniques</h2>
-                      <p className="text-gray-500">Caractéristiques complètes du véhicule</p>
+                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">DÃ©tails techniques</h2>
+                      <p className="text-gray-500">CaractÃ©ristiques complÃ¨tes du vÃ©hicule</p>
                     </div>
                   </div>
 
@@ -398,7 +480,7 @@ export function PublishPage() {
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <Gauge className="w-4 h-4 text-[#FACC15]" />
-                        Kilométrage (km) *
+                        KilomÃ©trage (km) *
                       </Label>
                       <Input
                         type="number"
@@ -437,8 +519,8 @@ export function PublishPage() {
                         <SelectContent>
                           <SelectItem value="essence">Essence</SelectItem>
                           <SelectItem value="diesel">Diesel</SelectItem>
-                          <SelectItem value="hybrid">Hybride</SelectItem>
-                          <SelectItem value="electric">Électrique</SelectItem>
+                          <SelectItem value="hybride">Hybride</SelectItem>
+                          <SelectItem value="electrique">Ã‰lectrique</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -549,23 +631,23 @@ export function PublishPage() {
                         className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12"
                       />
                       <p className="text-sm text-gray-500">
-                        Indiquez la ville et le quartier où se trouve le véhicule
+                        Indiquez la ville et le quartier oÃ¹ se trouve le vÃ©hicule
                       </p>
                     </div>
 
                     <div className="space-y-2">
                       <Label className="flex items-center gap-2">
                         <FileText className="w-4 h-4 text-[#FACC15]" />
-                        Description détaillée *
+                        Description dÃ©taillÃ©e *
                       </Label>
                       <Textarea
-                        placeholder="Décrivez votre véhicule : état général, entretien, équipements, raison de la vente..."
+                        placeholder="DÃ©crivez votre vÃ©hicule : Ã©tat gÃ©nÃ©ral, entretien, Ã©quipements, raison de la vente..."
                         value={formData.description}
                         onChange={(e) => updateFormData('description', e.target.value)}
                         className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors min-h-[150px] resize-none"
                       />
                       <p className="text-sm text-gray-500">
-                        {formData.description.length} / 1000 caractères (minimum 10)
+                        {formData.description.length} / 1000 caractÃ¨res (minimum 10)
                       </p>
                     </div>
                   </div>
@@ -577,7 +659,7 @@ export function PublishPage() {
                       <div>
                         <p className="font-medium text-green-900">Conseils de prix</p>
                         <p className="text-sm text-green-700">
-                          Consultez les annonces similaires pour fixer un prix compétitif. Un prix juste attire plus d'acheteurs.
+                          Consultez les annonces similaires pour fixer un prix compÃ©titif. Un prix juste attire plus d'acheteurs.
                         </p>
                       </div>
                     </div>
@@ -593,8 +675,8 @@ export function PublishPage() {
                       <ImageIcon className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Photos du véhicule</h2>
-                      <p className="text-gray-500">Des photos de qualité augmentent vos chances de vente</p>
+                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Photos du vÃ©hicule</h2>
+                      <p className="text-gray-500">Des photos de qualitÃ© augmentent vos chances de vente</p>
                     </div>
                   </div>
 
@@ -610,10 +692,10 @@ export function PublishPage() {
                       <div>
                         <p className="font-medium text-orange-900">Conseils photo</p>
                         <ul className="text-sm text-orange-700 space-y-1 mt-2">
-                          <li>✓ Prenez des photos en pleine lumière naturelle</li>
-                          <li>✓ Photographiez l'extérieur sous plusieurs angles</li>
-                          <li>✓ Montrez l'intérieur (tableau de bord, sièges, coffre)</li>
-                          <li>✓ Ajoutez des détails (compteur kilométrique, pneus)</li>
+                          <li>âœ“ Prenez des photos en pleine lumiÃ¨re naturelle</li>
+                          <li>âœ“ Photographiez l'extÃ©rieur sous plusieurs angles</li>
+                          <li>âœ“ Montrez l'intÃ©rieur (tableau de bord, siÃ¨ges, coffre)</li>
+                          <li>âœ“ Ajoutez des dÃ©tails (compteur kilomÃ©trique, pneus)</li>
                         </ul>
                       </div>
                     </div>
@@ -630,18 +712,19 @@ export function PublishPage() {
                   className="gap-2 disabled:opacity-50"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  Précédent
+                  PrÃ©cÃ©dent
                 </Button>
 
                 {currentStep === steps.length - 1 ? (
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button
                       onClick={handleSubmit}
+                      disabled={isSubmitting}
                       className="gap-2 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] shadow-lg hover:shadow-xl px-8"
                     >
                       <CheckCircle className="w-5 h-5" />
-                      Publier mon annonce
-                      <Sparkles className="w-4 h-4" />
+                      {isSubmitting ? 'Publication...' : 'Publier mon annonce'}
+                      {!isSubmitting && <Sparkles className="w-4 h-4" />}
                     </Button>
                   </motion.div>
                 ) : (
@@ -660,6 +743,12 @@ export function PublishPage() {
           </motion.div>
         </AnimatePresence>
 
+        {submitError && (
+          <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-4 text-red-800 font-medium">
+            {submitError}
+          </div>
+        )}
+
         {/* Benefits Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -676,14 +765,14 @@ export function PublishPage() {
             },
             {
               icon: Shield,
-              title: 'Vendeurs vérifiés',
+              title: 'Vendeurs vÃ©rifiÃ©s',
               description: 'Badge de confiance pour rassurer les acheteurs',
               gradient: 'from-green-500 to-emerald-500'
             },
             {
               icon: Sparkles,
-              title: 'Visibilité maximale',
-              description: 'Votre annonce mise en avant auprès de milliers d\'acheteurs',
+              title: 'VisibilitÃ© maximale',
+              description: 'Votre annonce mise en avant auprÃ¨s de milliers d\'acheteurs',
               gradient: 'from-purple-500 to-pink-500'
             }
           ].map((benefit, index) => (
@@ -700,3 +789,7 @@ export function PublishPage() {
     </div>
   );
 }
+
+
+
+
