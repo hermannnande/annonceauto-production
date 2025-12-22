@@ -1,4 +1,4 @@
-﻿import { API_ENDPOINTS, getAuthHeaders, getAuthHeadersMultipart, handleApiError } from '../config/api';
+﻿import { API_ENDPOINTS, getAuthHeadersMultipart, handleApiError } from '../config/api';
 
 export interface UploadResponse {
   success: boolean;
@@ -6,8 +6,21 @@ export interface UploadResponse {
   url?: string;
 }
 
+const safeJson = async (response: Response): Promise<any> => {
+  try {
+    return await response.json();
+  } catch {
+    return {};
+  }
+};
+
+const getErrorMessage = (response: Response, body: any) => {
+  return body?.error || body?.message || `Erreur upload (${response.status})`;
+};
+
 /**
  * Upload d'une image vers Cloudinary via le backend
+ * POST /api/upload/image (field: image)
  */
 export const uploadImage = async (file: File): Promise<UploadResponse> => {
   try {
@@ -20,23 +33,25 @@ export const uploadImage = async (file: File): Promise<UploadResponse> => {
       body: formData,
     });
 
-    const result = await response.json();
+    const body = await safeJson(response);
 
     if (!response.ok) {
-      return { 
-        success: false, 
-        message: result.message || 'Erreur lors de l\'upload de l\'image' 
-      };
+      return { success: false, message: getErrorMessage(response, body) };
     }
 
-    return { success: true, url: result.url };
+    if (!body?.url || typeof body.url !== 'string') {
+      return { success: false, message: 'Reponse upload invalide.' };
+    }
+
+    return { success: true, url: body.url };
   } catch (error) {
     return handleApiError(error);
   }
 };
 
 /**
- * Upload de plusieurs images
+ * Upload de plusieurs images via le backend
+ * POST /api/upload/images (field: images[])
  */
 export const uploadMultipleImages = async (files: File[]): Promise<{
   success: boolean;
@@ -44,20 +59,30 @@ export const uploadMultipleImages = async (files: File[]): Promise<{
   urls?: string[];
 }> => {
   try {
-    const uploadPromises = files.map(file => uploadImage(file));
-    const results = await Promise.all(uploadPromises);
+    const endpoint = String(API_ENDPOINTS.upload.image || '').replace(/\/image$/, '/images');
 
-    const failedUploads = results.filter(r => !r.success);
-    
-    if (failedUploads.length > 0) {
-      return {
-        success: false,
-        message: `${failedUploads.length} image(s) n'ont pas pu Ãªtre uploadÃ©es`,
-      };
+    const formData = new FormData();
+    files.forEach((file) => formData.append('images', file));
+
+    const response = await fetch(endpoint, {
+      method: 'POST',
+      headers: getAuthHeadersMultipart(),
+      body: formData,
+    });
+
+    const body = await safeJson(response);
+
+    if (!response.ok) {
+      return { success: false, message: getErrorMessage(response, body) };
     }
 
-    const urls = results.map(r => r.url).filter(Boolean) as string[];
-    
+    const images = Array.isArray(body?.images) ? body.images : [];
+    const urls = images.map((img: any) => img?.url).filter((u: any) => typeof u === 'string');
+
+    if (urls.length === 0) {
+      return { success: false, message: 'Aucune URL retournee par le serveur.' };
+    }
+
     return { success: true, urls };
   } catch (error) {
     return handleApiError(error);
@@ -66,6 +91,5 @@ export const uploadMultipleImages = async (files: File[]): Promise<{
 
 export const uploadService = {
   uploadImage,
-  uploadMultipleImages
+  uploadMultipleImages,
 };
-
