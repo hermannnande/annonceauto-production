@@ -187,20 +187,28 @@ export function VendorSettings() {
                   <label className="block text-sm font-medium text-gray-700 mb-2">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4" />
-                      Nom complet
+                      Prénom
                     </div>
                   </label>
                   <input
                     type="text"
-                    value={`${formData.prenom} ${formData.nom}`.trim()}
-                    onChange={(e) => {
-                      const parts = e.target.value.trim().split(/\s+/);
-                      setFormData((prev) => ({
-                        ...prev,
-                        prenom: parts[0] || '',
-                        nom: parts.slice(1).join(' ') || '',
-                      }));
-                    }}
+                    value={formData.prenom}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, prenom: e.target.value }))}
+                    className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FACC15] focus:border-transparent transition-all"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <div className="flex items-center gap-2">
+                      <User className="w-4 h-4" />
+                      Nom
+                    </div>
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.nom}
+                    onChange={(e) => setFormData((prev) => ({ ...prev, nom: e.target.value }))}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#FACC15] focus:border-transparent transition-all"
                   />
                 </div>
