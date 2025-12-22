@@ -17,6 +17,7 @@ type UploadItem = {
 };
 
 const uid = () => Math.random().toString(36).slice(2);
+const MAX_FILE_SIZE = 5 * 1024 * 1024; // 5MB
 
 export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps) {
   const [items, setItems] = useState<UploadItem[]>([]);
@@ -57,14 +58,24 @@ export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps
   const handleFiles = async (files: File[]) => {
     setError('');
 
-    const imageFiles = files.filter(file => file.type.startsWith('image/'));
+    const imageFiles = files.filter((file) => file.type.startsWith('image/'));
     if (imageFiles.length === 0) {
       setError('Veuillez selectionner uniquement des images.');
       return;
     }
 
+    const tooLarge = imageFiles.filter((f) => f.size > MAX_FILE_SIZE);
+    if (tooLarge.length > 0) {
+      setError(`Image trop volumineuse (max 5MB): ${tooLarge[0].name}`);
+    }
+
+    const sizeOk = imageFiles.filter((f) => f.size <= MAX_FILE_SIZE);
+    if (sizeOk.length === 0) {
+      return;
+    }
+
     const spaceLeft = Math.max(0, maxImages - items.length);
-    const selected = imageFiles.slice(0, spaceLeft);
+    const selected = sizeOk.slice(0, spaceLeft);
     if (selected.length === 0) {
       setError(`Vous avez deja atteint la limite (${maxImages} images).`);
       return;
