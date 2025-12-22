@@ -1,4 +1,4 @@
-﻿import { useState } from 'react';
+﻿import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import {
@@ -29,10 +29,10 @@ import { ImageUpload } from '../components/ImageUpload';
 import { useAuth } from '../../hooks/useAuth';
 import { vehicleService } from '../../services/vehicle.service';
 
-// Liste complÃ¨te des marques de vÃ©hicules
+// Liste complète des marques de véhicules
 const CAR_BRANDS = [
   'Acura', 'Alfa Romeo', 'Aston Martin', 'Audi', 'Bentley', 'BMW', 'Bugatti', 'Buick',
-  'Cadillac', 'Chevrolet', 'Chrysler', 'CitroÃ«n', 'Dacia', 'Daewoo', 'Daihatsu', 'Dodge',
+  'Cadillac', 'Chevrolet', 'Chrysler', 'Citroën', 'Dacia', 'Daewoo', 'Daihatsu', 'Dodge',
   'Ferrari', 'Fiat', 'Ford', 'Genesis', 'GMC', 'Honda', 'Hummer', 'Hyundai',
   'Infiniti', 'Isuzu', 'Jaguar', 'Jeep', 'Kia', 'Lamborghini', 'Land Rover', 'Lexus',
   'Lincoln', 'Lotus', 'Maserati', 'Mazda', 'McLaren', 'Mercedes-Benz', 'Mini', 'Mitsubishi',
@@ -49,6 +49,7 @@ export function PublishPage() {
   const [showOtherBrand, setShowOtherBrand] = useState(false);
   const [submitError, setSubmitError] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const errorRef = useRef<HTMLDivElement>(null);
   const [formData, setFormData] = useState({
     // Step 1: Vehicle Info
     brand: '',
@@ -76,15 +77,15 @@ export function PublishPage() {
   const steps = [
     {
       id: 0,
-      title: 'Informations du vÃ©hicule',
+      title: 'Informations du véhicule',
       subtitle: 'Les bases de votre annonce',
       icon: Car,
       gradient: 'from-purple-500 to-pink-500'
     },
     {
       id: 1,
-      title: 'DÃ©tails techniques',
-      subtitle: 'CaractÃ©ristiques complÃ¨tes',
+      title: 'Détails techniques',
+      subtitle: 'Caractéristiques complètes',
       icon: Settings,
       gradient: 'from-blue-500 to-cyan-500'
     },
@@ -97,7 +98,7 @@ export function PublishPage() {
     },
     {
       id: 3,
-      title: 'Photos du vÃ©hicule',
+      title: 'Photos du véhicule',
       subtitle: 'Valorisez votre annonce',
       icon: ImageIcon,
       gradient: 'from-orange-500 to-yellow-500'
@@ -107,7 +108,7 @@ export function PublishPage() {
   const updateFormData = (field: string, value: string | string[]) => {
     setFormData(prev => ({ ...prev, [field]: value }));
     
-    // Si "Autre" est sÃ©lectionnÃ©, afficher le champ personnalisÃ©
+    // Si "Autre" est sélectionné, afficher le champ personnalisé
     if (field === 'brand' && value === 'Autre') {
       setShowOtherBrand(true);
     } else if (field === 'brand') {
@@ -120,10 +121,13 @@ export function PublishPage() {
     b.toLowerCase().includes(brandSearch.toLowerCase())
   );
 
+  // Helper pour vérifier si c'est une "autre marque"
+  const isOtherBrand = (brand: string) => brand === 'Autre';
+
   // Validation par step
   const isStepValid = (step: number): boolean => {
     switch (step) {
-      case 0: // Step 1: Informations du vÃ©hicule
+      case 0: // Step 1: Informations du véhicule
         return !!(
           formData.brand &&
           (formData.brand !== 'Autre' || formData.customBrand) &&
@@ -131,7 +135,7 @@ export function PublishPage() {
           formData.year &&
           formData.condition
         );
-      case 1: // Step 2: DÃ©tails techniques
+      case 1: // Step 2: Détails techniques
         return !!(
           formData.mileage &&
           formData.transmission &&
@@ -169,10 +173,18 @@ export function PublishPage() {
   };
 
   const handleSubmit = async () => {
+    const showError = (msg: string) => {
+      setSubmitError(msg);
+      // rendre l'erreur visible sans que l'utilisateur doive scroller
+      window.requestAnimationFrame(() => {
+        errorRef.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    };
+
     setSubmitError('');
 
     if (!isAuthenticated) {
-      setSubmitError('Vous devez etre connecte pour publier une annonce.');
+      showError('Vous devez être connecté pour publier une annonce.');
       setTimeout(() => navigate('/connexion'), 800);
       return;
     }
@@ -185,32 +197,34 @@ export function PublishPage() {
       isStepValid(3);
 
     if (!canPublish) {
-      setSubmitError('Veuillez completer tous les champs requis et uploader au moins une photo.');
+      showError('Veuillez compléter tous les champs requis et uploader au moins une photo.');
       return;
     }
 
     const allImagesAreRemote = formData.images.every((u) => /^https?:\/\//i.test(u));
     if (!allImagesAreRemote) {
-      setSubmitError("Veuillez attendre la fin de l'upload des photos avant de publier.");
+      showError('Veuillez attendre la fin de l\'upload des photos avant de publier.');
       return;
     }
 
-    const marque = (formData.brand === 'Autre' ? formData.customBrand : formData.brand).trim();
+    const marque = (isOtherBrand(formData.brand) ? formData.customBrand : formData.brand).trim();
     if (!marque) {
-      setSubmitError('Marque requise.');
+      showError('Marque requise.');
       return;
     }
 
     const transmission = formData.transmission === 'automatic' ? 'automatique' : 'manuelle';
 
     setIsSubmitting(true);
+    console.log('[PUBLISH] Debut de la publication...', { marque, formData });
+
     try {
       const [ville, commune] = formData.location
         .split(',')
         .map((s) => s.trim())
         .filter(Boolean);
 
-      const res = await vehicleService.createVehicle({
+      const payload = {
         titre: `${marque} ${formData.model} ${formData.year}`.trim(),
         marque,
         modele: formData.model,
@@ -224,25 +238,41 @@ export function PublishPage() {
         ville: ville || formData.location,
         commune: commune || undefined,
         images: formData.images,
-      });
+      };
+
+      console.log('[PUBLISH] Envoi du payload:', payload);
+
+      const res = await vehicleService.createVehicle(payload);
+
+      console.log('[PUBLISH] Reponse du serveur:', res);
 
       if (!res.success || !res.vehicle?.id) {
-        setSubmitError(res.message || 'Erreur lors de la publication');
+        console.error('[PUBLISH] Echec de la creation:', res);
+        showError(res.message || 'Erreur lors de la publication');
         return;
       }
+
+      console.log('[PUBLISH] Vehicule cree avec succes:', res.vehicle.id);
 
       // Rafraichir le profil (credits, etc.) sans bloquer la redirection
       try {
         await refreshUser();
-      } catch {
-        // ignore
+        console.log('[PUBLISH] Profil rafraichi');
+      } catch (refreshErr) {
+        console.warn('[PUBLISH] Erreur lors du rafraichissement du profil:', refreshErr);
       }
 
-      // Rediriger vers l'annonce
-      navigate(`/annonces/${res.vehicle.id}`);
+      // Message de succes
+      alert('✅ Votre annonce a ete publiee avec succes ! Elle sera visible apres validation par un administrateur.');
+
+      // Rediriger vers le tableau de bord
+      console.log('[PUBLISH] Redirection vers /dashboard/vendeur/annonces');
+      navigate('/dashboard/vendeur/annonces');
     } catch (err: any) {
-      setSubmitError(err?.message || 'Erreur lors de la publication');
+      console.error('[PUBLISH] Erreur catch:', err);
+      showError(err?.message || 'Erreur lors de la publication');
     } finally {
+      console.log('[PUBLISH] Fin du handleSubmit');
       setIsSubmitting(false);
     }
   };
@@ -258,14 +288,14 @@ export function PublishPage() {
         >
           <div className="inline-flex items-center gap-2 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] rounded-full px-6 py-2 mb-6 shadow-lg">
             <Sparkles className="w-4 h-4" />
-            <span className="text-sm font-bold">Publication GuidÃ©e</span>
+            <span className="text-sm font-bold">Publication Guidée</span>
           </div>
           
           <h1 className="text-4xl md:text-6xl font-bold mb-4 font-[var(--font-poppins)] bg-gradient-to-r from-[#0F172A] via-[#1e293b] to-[#0F172A] bg-clip-text text-transparent">
             Publiez votre annonce
           </h1>
           <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-            Vendez votre vÃ©hicule rapidement avec notre processus simple et efficace
+            Vendez votre véhicule rapidement avec notre processus simple et efficace
           </p>
         </motion.div>
 
@@ -273,191 +303,148 @@ export function PublishPage() {
         <div className="mb-12">
           <div className="flex items-center justify-between relative max-w-4xl mx-auto">
             {/* Progress Line */}
-            <div className="absolute top-1/2 left-0 right-0 h-1 bg-gray-200 -translate-y-1/2 -z-10">
+            <div className="absolute top-6 left-0 right-0 h-1 bg-gray-200 -z-10">
               <motion.div
                 initial={{ width: 0 }}
                 animate={{ width: `${(currentStep / (steps.length - 1)) * 100}%` }}
                 className="h-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24]"
-                transition={{ duration: 0.5 }}
+                transition={{ duration: 0.3 }}
               />
             </div>
 
-            {steps.map((step, index) => (
-              <motion.div
-                key={step.id}
-                initial={{ scale: 0 }}
-                animate={{ scale: 1 }}
-                transition={{ delay: index * 0.1 }}
-                className="flex flex-col items-center relative"
-              >
-                <motion.div
-                  whileHover={{ scale: 1.1 }}
-                  className={`w-16 h-16 rounded-2xl flex items-center justify-center mb-3 cursor-pointer transition-all duration-300 ${
-                    currentStep >= index
-                      ? `bg-gradient-to-br ${step.gradient} shadow-lg`
-                      : 'bg-white border-2 border-gray-300'
-                  }`}
-                  onClick={() => setCurrentStep(index)}
-                >
-                  {currentStep > index ? (
-                    <CheckCircle className="w-8 h-8 text-white" />
-                  ) : (
-                    <step.icon className={`w-8 h-8 ${currentStep >= index ? 'text-white' : 'text-gray-400'}`} />
-                  )}
-                </motion.div>
+            {/* Steps */}
+            {steps.map((step, index) => {
+              const isActive = index === currentStep;
+              const isCompleted = index < currentStep;
+              const StepIcon = step.icon;
 
-                <div className="text-center hidden md:block">
-                  <p className={`text-sm font-bold font-[var(--font-poppins)] ${
-                    currentStep >= index ? 'text-gray-900' : 'text-gray-400'
-                  }`}>
+              return (
+                <div key={step.id} className="flex flex-col items-center">
+                  <motion.div
+                    whileHover={{ scale: 1.05 }}
+                    className={`w-12 h-12 rounded-full flex items-center justify-center mb-2 transition-all ${
+                      isActive
+                        ? 'bg-gradient-to-r from-[#FACC15] to-[#FBBF24] shadow-lg'
+                        : isCompleted
+                        ? 'bg-green-500'
+                        : 'bg-gray-300'
+                    }`}
+                  >
+                    {isCompleted ? (
+                      <CheckCircle className="w-6 h-6 text-white" />
+                    ) : (
+                      <StepIcon className={`w-6 h-6 ${isActive ? 'text-[#0F172A]' : 'text-white'}`} />
+                    )}
+                  </motion.div>
+                  <span className={`text-xs font-medium text-center max-w-[100px] ${isActive ? 'text-[#0F172A]' : 'text-gray-500'}`}>
                     {step.title}
-                  </p>
-                  <p className="text-xs text-gray-500">
-                    {step.subtitle}
-                  </p>
+                  </span>
                 </div>
-              </motion.div>
-            ))}
+              );
+            })}
           </div>
         </div>
 
-        {/* Form Content */}
+        {/* Step Content */}
         <AnimatePresence mode="wait">
           <motion.div
             key={currentStep}
-            initial={{ opacity: 0, x: 50 }}
+            initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -50 }}
+            exit={{ opacity: 0, x: -20 }}
             transition={{ duration: 0.3 }}
           >
-            <Card className="p-8 md:p-12 border-0 shadow-2xl relative overflow-hidden">
-              {/* Background Decoration */}
-              <div className={`absolute top-0 right-0 w-64 h-64 bg-gradient-to-br ${steps[currentStep].gradient} opacity-5 rounded-full blur-3xl`} />
-
+            <Card className="p-8 shadow-2xl border-0 backdrop-blur-sm bg-white/90">
               {/* Step 1: Vehicle Info */}
               {currentStep === 0 && (
-                <div className="space-y-6 relative z-10">
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${steps[0].gradient} flex items-center justify-center`}>
-                      <Car className="w-6 h-6 text-white" />
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${steps[0].gradient} flex items-center justify-center`}>
+                      <Car className="w-8 h-8 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Informations du vÃ©hicule</h2>
-                      <p className="text-gray-500">CommenÃ§ons par les informations essentielles</p>
+                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Informations du véhicule</h2>
+                      <p className="text-gray-500">Commençons par les informations de base</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Brand */}
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-[#FACC15] rounded-full" />
+                      <Label htmlFor="brand" className="flex items-center gap-2 text-base font-medium">
+                        <Car className="w-4 h-4" />
                         Marque *
                       </Label>
-                      <Select 
-                        value={formData.brand} 
-                        onValueChange={(value) => updateFormData('brand', value)}
-                      >
-                        <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
-                          <SelectValue placeholder="SÃ©lectionnez la marque" />
+                      <Select value={formData.brand} onValueChange={(v) => updateFormData('brand', v)}>
+                        <SelectTrigger className="h-12 border-2 hover:border-[#FACC15] transition-colors">
+                          <SelectValue placeholder="Sélectionner la marque" />
                         </SelectTrigger>
                         <SelectContent>
-                          {/* Barre de recherche */}
-                          <div className="px-2 py-2 border-b">
-                            <Input
-                              placeholder="Rechercher une marque..."
-                              value={brandSearch}
-                              onChange={(e) => setBrandSearch(e.target.value)}
-                              className="h-8 text-sm"
-                              onClick={(e) => e.stopPropagation()}
-                            />
-                          </div>
-                          {filteredBrands.map((brandName) => (
-                            <SelectItem key={brandName} value={brandName}>
-                              {brandName}
-                            </SelectItem>
+                          {filteredBrands.map(brand => (
+                            <SelectItem key={brand} value={brand}>{brand}</SelectItem>
                           ))}
-                          {filteredBrands.length === 0 && (
-                            <div className="px-2 py-4 text-sm text-gray-500 text-center">
-                              Aucune marque trouvÃ©e
-                            </div>
-                          )}
                         </SelectContent>
                       </Select>
-                      
-                      {/* Champ personnalisÃ© si "Autre" sÃ©lectionnÃ© */}
-                      {showOtherBrand && (
-                        <motion.div
-                          initial={{ opacity: 0, height: 0 }}
-                          animate={{ opacity: 1, height: 'auto' }}
-                          className="mt-2"
-                        >
-                          <Input
-                            placeholder="Entrez le nom de la marque"
-                            value={formData.customBrand}
-                            onChange={(e) => updateFormData('customBrand', e.target.value)}
-                            className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12"
-                          />
-                        </motion.div>
-                      )}
                     </div>
 
+                    {/* Custom Brand (if Autre selected) */}
+                    {showOtherBrand && (
+                      <div className="space-y-2">
+                        <Label htmlFor="customBrand" className="text-base font-medium">
+                          Précisez la marque *
+                        </Label>
+                        <Input
+                          id="customBrand"
+                          value={formData.customBrand}
+                          onChange={(e) => updateFormData('customBrand', e.target.value)}
+                          placeholder="Entrez la marque"
+                          className="h-12 border-2 hover:border-[#FACC15] transition-colors"
+                        />
+                      </div>
+                    )}
+
+                    {/* Model */}
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <span className="w-2 h-2 bg-[#FACC15] rounded-full" />
-                        ModÃ¨le
-                      </Label>
+                      <Label htmlFor="model" className="text-base font-medium">Modèle *</Label>
                       <Input
-                        placeholder="Ex: Camry, SÃ©rie 5..."
+                        id="model"
                         value={formData.model}
                         onChange={(e) => updateFormData('model', e.target.value)}
-                        className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12"
+                        placeholder="Ex: Corolla, A4, etc."
+                        className="h-12 border-2 hover:border-[#FACC15] transition-colors"
                       />
                     </div>
 
+                    {/* Year */}
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-[#FACC15]" />
-                        AnnÃ©e *
+                      <Label htmlFor="year" className="flex items-center gap-2 text-base font-medium">
+                        <Calendar className="w-4 h-4" />
+                        Année *
                       </Label>
-                      <Select value={formData.year} onValueChange={(value) => updateFormData('year', value)}>
-                        <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
-                          <SelectValue placeholder="AnnÃ©e du vÃ©hicule" />
-                        </SelectTrigger>
-                        <SelectContent>
-                          {Array.from({ length: 28 }, (_, i) => 2025 - i).map(year => (
-                            <SelectItem key={year} value={year.toString()}>{year}</SelectItem>
-                          ))}
-                        </SelectContent>
-                      </Select>
+                      <Input
+                        id="year"
+                        type="number"
+                        value={formData.year}
+                        onChange={(e) => updateFormData('year', e.target.value)}
+                        placeholder="Ex: 2020"
+                        className="h-12 border-2 hover:border-[#FACC15] transition-colors"
+                      />
                     </div>
 
+                    {/* Condition */}
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Shield className="w-4 h-4 text-[#FACC15]" />
-                        Ã‰tat *
-                      </Label>
-                      <Select value={formData.condition} onValueChange={(value) => updateFormData('condition', value)}>
-                        <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
-                          <SelectValue placeholder="Ã‰tat du vÃ©hicule" />
+                      <Label htmlFor="condition" className="text-base font-medium">État *</Label>
+                      <Select value={formData.condition} onValueChange={(v) => updateFormData('condition', v)}>
+                        <SelectTrigger className="h-12 border-2 hover:border-[#FACC15] transition-colors">
+                          <SelectValue placeholder="Sélectionner l'état" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="new">Neuf</SelectItem>
-                          <SelectItem value="used">Occasion</SelectItem>
+                          <SelectItem value="Neuf">Neuf</SelectItem>
+                          <SelectItem value="Excellent">Excellent</SelectItem>
+                          <SelectItem value="Bon">Bon</SelectItem>
+                          <SelectItem value="Correct">Correct</SelectItem>
                         </SelectContent>
                       </Select>
-                    </div>
-                  </div>
-
-                  {/* Info Box */}
-                  <div className="bg-gradient-to-r from-blue-50 to-cyan-50 border-l-4 border-blue-500 p-4 rounded-lg mt-6">
-                    <div className="flex items-start gap-3">
-                      <Zap className="w-5 h-5 text-blue-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-blue-900">Conseil Pro</p>
-                        <p className="text-sm text-blue-700">
-                          Soyez prÃ©cis dans vos informations. Plus votre annonce est dÃ©taillÃ©e, plus vous attirez d'acheteurs sÃ©rieux.
-                        </p>
-                      </div>
                     </div>
                   </div>
                 </div>
@@ -465,218 +452,175 @@ export function PublishPage() {
 
               {/* Step 2: Technical Details */}
               {currentStep === 1 && (
-                <div className="space-y-6 relative z-10">
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${steps[1].gradient} flex items-center justify-center`}>
-                      <Settings className="w-6 h-6 text-white" />
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${steps[1].gradient} flex items-center justify-center`}>
+                      <Settings className="w-8 h-8 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">DÃ©tails techniques</h2>
-                      <p className="text-gray-500">CaractÃ©ristiques complÃ¨tes du vÃ©hicule</p>
+                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Détails techniques</h2>
+                      <p className="text-gray-500">Les caractéristiques de votre véhicule</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Mileage */}
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Gauge className="w-4 h-4 text-[#FACC15]" />
-                        KilomÃ©trage (km) *
+                      <Label htmlFor="mileage" className="flex items-center gap-2 text-base font-medium">
+                        <Gauge className="w-4 h-4" />
+                        Kilométrage *
                       </Label>
                       <Input
-                        type="number"
-                        placeholder="Ex: 50000"
+                        id="mileage"
                         value={formData.mileage}
                         onChange={(e) => updateFormData('mileage', e.target.value)}
-                        className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12"
+                        placeholder="Ex: 50 000 km"
+                        className="h-12 border-2 hover:border-[#FACC15] transition-colors"
                       />
                     </div>
 
+                    {/* Transmission */}
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Settings className="w-4 h-4 text-[#FACC15]" />
-                        Transmission *
-                      </Label>
-                      <Select value={formData.transmission} onValueChange={(value) => updateFormData('transmission', value)}>
-                        <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
-                          <SelectValue placeholder="Type de transmission" />
+                      <Label htmlFor="transmission" className="text-base font-medium">Boîte de vitesse *</Label>
+                      <Select value={formData.transmission} onValueChange={(v) => updateFormData('transmission', v)}>
+                        <SelectTrigger className="h-12 border-2 hover:border-[#FACC15] transition-colors">
+                          <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="automatic">Automatique</SelectItem>
                           <SelectItem value="manual">Manuelle</SelectItem>
+                          <SelectItem value="automatic">Automatique</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
+                    {/* Fuel */}
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Fuel className="w-4 h-4 text-[#FACC15]" />
+                      <Label htmlFor="fuel" className="flex items-center gap-2 text-base font-medium">
+                        <Fuel className="w-4 h-4" />
                         Carburant *
                       </Label>
-                      <Select value={formData.fuel} onValueChange={(value) => updateFormData('fuel', value)}>
-                        <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
-                          <SelectValue placeholder="Type de carburant" />
+                      <Select value={formData.fuel} onValueChange={(v) => updateFormData('fuel', v)}>
+                        <SelectTrigger className="h-12 border-2 hover:border-[#FACC15] transition-colors">
+                          <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="essence">Essence</SelectItem>
-                          <SelectItem value="diesel">Diesel</SelectItem>
-                          <SelectItem value="hybride">Hybride</SelectItem>
-                          <SelectItem value="electrique">Ã‰lectrique</SelectItem>
+                          <SelectItem value="Essence">Essence</SelectItem>
+                          <SelectItem value="Diesel">Diesel</SelectItem>
+                          <SelectItem value="Électrique">Électrique</SelectItem>
+                          <SelectItem value="Hybride">Hybride</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
 
+                    {/* Color */}
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <Car className="w-4 h-4 text-[#FACC15]" />
-                        Nombre de portes
+                      <Label htmlFor="color" className="flex items-center gap-2 text-base font-medium">
+                        <Palette className="w-4 h-4" />
+                        Couleur *
                       </Label>
-                      <Select value={formData.doors} onValueChange={(value) => updateFormData('doors', value)}>
-                        <SelectTrigger className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12">
-                          <SelectValue placeholder="Nombre de portes" />
+                      <Input
+                        id="color"
+                        value={formData.color}
+                        onChange={(e) => updateFormData('color', e.target.value)}
+                        placeholder="Ex: Noir, Blanc, Rouge..."
+                        className="h-12 border-2 hover:border-[#FACC15] transition-colors"
+                      />
+                    </div>
+
+                    {/* Doors (optional) */}
+                    <div className="space-y-2">
+                      <Label htmlFor="doors" className="text-base font-medium">Nombre de portes</Label>
+                      <Select value={formData.doors} onValueChange={(v) => updateFormData('doors', v)}>
+                        <SelectTrigger className="h-12 border-2 hover:border-[#FACC15] transition-colors">
+                          <SelectValue placeholder="Sélectionner" />
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="2">2 portes</SelectItem>
-                          <SelectItem value="3">3 portes</SelectItem>
                           <SelectItem value="4">4 portes</SelectItem>
                           <SelectItem value="5">5 portes</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
-
-                    <div className="space-y-2 md:col-span-2">
-                      <Label className="flex items-center gap-2">
-                        <Palette className="w-4 h-4 text-[#FACC15]" />
-                        Couleur *
-                      </Label>
-                      <div className="grid grid-cols-4 md:grid-cols-8 gap-3">
-                        {[
-                          { name: 'Noir', value: 'black', color: 'bg-black' },
-                          { name: 'Blanc', value: 'white', color: 'bg-white border-2' },
-                          { name: 'Gris', value: 'gray', color: 'bg-gray-500' },
-                          { name: 'Argent', value: 'silver', color: 'bg-gray-300' },
-                          { name: 'Bleu', value: 'blue', color: 'bg-blue-600' },
-                          { name: 'Rouge', value: 'red', color: 'bg-red-600' },
-                          { name: 'Vert', value: 'green', color: 'bg-green-600' },
-                          { name: 'Jaune', value: 'yellow', color: 'bg-yellow-400' }
-                        ].map(color => (
-                          <motion.button
-                            key={color.value}
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.9 }}
-                            type="button"
-                            onClick={() => updateFormData('color', color.value)}
-                            className={`relative aspect-square rounded-xl ${color.color} ${
-                              formData.color === color.value ? 'ring-4 ring-[#FACC15] ring-offset-2' : ''
-                            }`}
-                          >
-                            {formData.color === color.value && (
-                              <CheckCircle className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-6 h-6 text-[#FACC15]" />
-                            )}
-                            <span className="sr-only">{color.name}</span>
-                          </motion.button>
-                        ))}
-                      </div>
-                    </div>
                   </div>
                 </div>
               )}
 
-              {/* Step 3: Pricing & Location */}
+              {/* Step 3: Price & Location */}
               {currentStep === 2 && (
-                <div className="space-y-6 relative z-10">
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${steps[2].gradient} flex items-center justify-center`}>
-                      <DollarSign className="w-6 h-6 text-white" />
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${steps[2].gradient} flex items-center justify-center`}>
+                      <DollarSign className="w-8 h-8 text-white" />
                     </div>
                     <div>
                       <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Prix & Localisation</h2>
-                      <p className="text-gray-500">Finalisez votre offre</p>
+                      <p className="text-gray-500">Finalisez les détails de votre offre</p>
                     </div>
                   </div>
 
-                  <div className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {/* Price */}
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-[#FACC15]" />
-                        Prix de vente (FCFA) *
+                      <Label htmlFor="price" className="flex items-center gap-2 text-base font-medium">
+                        <DollarSign className="w-4 h-4" />
+                        Prix (FCFA) *
                       </Label>
-                      <div className="relative">
-                        <Input
-                          type="number"
-                          placeholder="Ex: 15000000"
-                          value={formData.price}
-                          onChange={(e) => updateFormData('price', e.target.value)}
-                          className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12 text-lg pr-20"
-                        />
-                        <span className="absolute right-4 top-1/2 -translate-y-1/2 font-bold text-gray-500">
-                          FCFA
-                        </span>
-                      </div>
-                      {formData.price && (
-                        <p className="text-sm text-gray-500">
-                          Soit environ {new Intl.NumberFormat('fr-FR').format(parseInt(formData.price))} FCFA
-                        </p>
-                      )}
+                      <Input
+                        id="price"
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => updateFormData('price', e.target.value)}
+                        placeholder="Ex: 5000000"
+                        className="h-12 border-2 hover:border-[#FACC15] transition-colors text-lg font-semibold"
+                      />
                     </div>
 
+                    {/* Location */}
                     <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-[#FACC15]" />
+                      <Label htmlFor="location" className="flex items-center gap-2 text-base font-medium">
+                        <MapPin className="w-4 h-4" />
                         Localisation *
                       </Label>
                       <Input
-                        placeholder="Ex: Abidjan, Cocody - Riviera 3"
+                        id="location"
                         value={formData.location}
                         onChange={(e) => updateFormData('location', e.target.value)}
-                        className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors h-12"
+                        placeholder="Ex: Abidjan, Cocody"
+                        className="h-12 border-2 hover:border-[#FACC15] transition-colors"
                       />
-                      <p className="text-sm text-gray-500">
-                        Indiquez la ville et le quartier oÃ¹ se trouve le vÃ©hicule
-                      </p>
-                    </div>
-
-                    <div className="space-y-2">
-                      <Label className="flex items-center gap-2">
-                        <FileText className="w-4 h-4 text-[#FACC15]" />
-                        Description dÃ©taillÃ©e *
-                      </Label>
-                      <Textarea
-                        placeholder="DÃ©crivez votre vÃ©hicule : Ã©tat gÃ©nÃ©ral, entretien, Ã©quipements, raison de la vente..."
-                        value={formData.description}
-                        onChange={(e) => updateFormData('description', e.target.value)}
-                        className="border-2 hover:border-[#FACC15] focus:border-[#FACC15] transition-colors min-h-[150px] resize-none"
-                      />
-                      <p className="text-sm text-gray-500">
-                        {formData.description.length} / 1000 caractÃ¨res (minimum 10)
-                      </p>
                     </div>
                   </div>
 
-                  {/* Pricing Tips */}
-                  <div className="bg-gradient-to-r from-green-50 to-emerald-50 border-l-4 border-green-500 p-4 rounded-lg">
-                    <div className="flex items-start gap-3">
-                      <Sparkles className="w-5 h-5 text-green-500 mt-0.5" />
-                      <div>
-                        <p className="font-medium text-green-900">Conseils de prix</p>
-                        <p className="text-sm text-green-700">
-                          Consultez les annonces similaires pour fixer un prix compÃ©titif. Un prix juste attire plus d'acheteurs.
-                        </p>
-                      </div>
-                    </div>
+                  {/* Description */}
+                  <div className="space-y-2">
+                    <Label htmlFor="description" className="flex items-center gap-2 text-base font-medium">
+                      <FileText className="w-4 h-4" />
+                      Description *
+                    </Label>
+                    <Textarea
+                      id="description"
+                      value={formData.description}
+                      onChange={(e) => updateFormData('description', e.target.value)}
+                      placeholder="Décrivez votre véhicule : état général, historique, équipements, etc."
+                      className="min-h-[150px] border-2 hover:border-[#FACC15] transition-colors resize-none"
+                    />
+                    <p className="text-sm text-gray-500">
+                      {formData.description.length}/500 caractères (minimum 10)
+                    </p>
                   </div>
                 </div>
               )}
 
               {/* Step 4: Images */}
               {currentStep === 3 && (
-                <div className="space-y-6 relative z-10">
-                  <div className="flex items-center gap-3 mb-8">
-                    <div className={`w-12 h-12 rounded-xl bg-gradient-to-br ${steps[3].gradient} flex items-center justify-center`}>
-                      <ImageIcon className="w-6 h-6 text-white" />
+                <div className="space-y-8">
+                  <div className="flex items-center gap-4 mb-8">
+                    <div className={`w-16 h-16 rounded-2xl bg-gradient-to-br ${steps[3].gradient} flex items-center justify-center`}>
+                      <ImageIcon className="w-8 h-8 text-white" />
                     </div>
                     <div>
-                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Photos du vÃ©hicule</h2>
-                      <p className="text-gray-500">Des photos de qualitÃ© augmentent vos chances de vente</p>
+                      <h2 className="text-2xl font-bold font-[var(--font-poppins)]">Photos du véhicule</h2>
+                      <p className="text-gray-500">Des photos de qualité augmentent vos chances de vente</p>
                     </div>
                   </div>
 
@@ -692,10 +636,10 @@ export function PublishPage() {
                       <div>
                         <p className="font-medium text-orange-900">Conseils photo</p>
                         <ul className="text-sm text-orange-700 space-y-1 mt-2">
-                          <li>âœ“ Prenez des photos en pleine lumiÃ¨re naturelle</li>
-                          <li>âœ“ Photographiez l'extÃ©rieur sous plusieurs angles</li>
-                          <li>âœ“ Montrez l'intÃ©rieur (tableau de bord, siÃ¨ges, coffre)</li>
-                          <li>âœ“ Ajoutez des dÃ©tails (compteur kilomÃ©trique, pneus)</li>
+                          <li>✓ Prenez des photos en pleine lumière naturelle</li>
+                          <li>✓ Photographiez l'extérieur sous plusieurs angles</li>
+                          <li>✓ Montrez l'intérieur (tableau de bord, sièges, coffre)</li>
+                          <li>✓ Ajoutez des détails (compteur kilométrique, pneus)</li>
                         </ul>
                       </div>
                     </div>
@@ -703,22 +647,37 @@ export function PublishPage() {
                 </div>
               )}
 
+              {/* Erreur de soumission (visible AVANT les boutons) */}
+              {submitError && (
+                <div
+                  ref={errorRef}
+                  className="mt-6 bg-red-50 border border-red-200 rounded-xl p-4 text-red-800 font-medium"
+                >
+                  {submitError}
+                </div>
+              )}
+
               {/* Navigation Buttons */}
               <div className="flex items-center justify-between mt-12 pt-8 border-t">
                 <Button
                   onClick={prevStep}
+                  type="button"
                   disabled={currentStep === 0}
                   variant="outline"
                   className="gap-2 disabled:opacity-50"
                 >
                   <ArrowLeft className="w-4 h-4" />
-                  PrÃ©cÃ©dent
+                  Précédent
                 </Button>
 
                 {currentStep === steps.length - 1 ? (
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button
-                      onClick={handleSubmit}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault();
+                        void handleSubmit();
+                      }}
                       disabled={isSubmitting}
                       className="gap-2 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] hover:from-[#FBBF24] hover:to-[#FACC15] shadow-lg hover:shadow-xl px-8"
                     >
@@ -731,6 +690,7 @@ export function PublishPage() {
                   <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
                     <Button
                       onClick={nextStep}
+                      type="button"
                       className="gap-2 bg-gradient-to-r from-[#0F172A] to-[#1e293b] hover:from-[#1e293b] hover:to-[#0F172A]"
                     >
                       Suivant
@@ -742,12 +702,6 @@ export function PublishPage() {
             </Card>
           </motion.div>
         </AnimatePresence>
-
-        {submitError && (
-          <div className="mt-6 bg-red-50 border border-red-200 rounded-xl p-4 text-red-800 font-medium">
-            {submitError}
-          </div>
-        )}
 
         {/* Benefits Section */}
         <motion.div
@@ -765,14 +719,14 @@ export function PublishPage() {
             },
             {
               icon: Shield,
-              title: 'Vendeurs vÃ©rifiÃ©s',
+              title: 'Vendeurs vérifiés',
               description: 'Badge de confiance pour rassurer les acheteurs',
               gradient: 'from-green-500 to-emerald-500'
             },
             {
               icon: Sparkles,
-              title: 'VisibilitÃ© maximale',
-              description: 'Votre annonce mise en avant auprÃ¨s de milliers d\'acheteurs',
+              title: 'Visibilité maximale',
+              description: 'Votre annonce mise en avant auprès de milliers d\'acheteurs',
               gradient: 'from-purple-500 to-pink-500'
             }
           ].map((benefit, index) => (
@@ -789,7 +743,3 @@ export function PublishPage() {
     </div>
   );
 }
-
-
-
-
