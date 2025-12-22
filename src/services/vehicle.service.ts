@@ -1,234 +1,264 @@
-import { API_ENDPOINTS, getAuthHeaders, handleApiError } from '../config/api';
+﻿import { API_BASE_URL, getAuthHeaders, handleApiError } from '../config/api';
 
-export interface Vehicle {
+export type VehicleStatut = 'en_attente' | 'approuve' | 'rejete' | 'vendu';
+
+export type ApiVehicle = {
   id: number;
   user_id: number;
-  brand: string;
-  model: string;
-  year: number;
-  price: number;
-  mileage?: number;
-  fuel_type?: string;
-  transmission?: string;
-  color?: string;
-  description?: string;
-  location?: string;
-  images: string[];
-  is_boosted: boolean;
-  boost_expiry?: string;
-  status: 'pending' | 'active' | 'sold' | 'rejected';
-  views: number;
-  whatsapp_contacts: number;
+  titre: string;
+  description: string;
+  marque: string;
+  modele: string;
+  annee: number;
+  prix: number;
+  kilometrage: string;
+  carburant: string;
+  transmission: string;
+  couleur?: string;
+  ville: string;
+  commune?: string;
+  images: any;
+  equipements?: any;
+  statut: VehicleStatut;
+  boost_level: number;
+  boost_expires_at?: string | null;
+  vues: number;
+  favoris: number;
   created_at: string;
   updated_at: string;
-}
 
-export interface VehicleFormData {
-  brand: string;
-  model: string;
-  year: number;
-  price: number;
-  mileage?: number;
-  fuel_type?: string;
-  transmission?: string;
-  color?: string;
-  description?: string;
-  location?: string;
+  // Champs join vendeur (selon route)
+  vendeur_nom?: string;
+  vendeur_telephone?: string;
+  vendeur_email?: string;
+  vendeur_ville?: string;
+  vendeur_avatar?: string;
+  vendeur_verified?: boolean;
+};
+
+export type VehicleFormData = {
+  titre: string;
+  description: string;
+  marque: string;
+  modele: string;
+  annee: number;
+  prix: number;
+  kilometrage: string;
+  carburant: string;
+  transmission: string;
+  couleur?: string;
+  ville: string;
+  commune?: string;
   images: string[];
-}
+  equipements?: any[];
+};
 
-export interface VehicleListResponse {
+export type VehicleListResponse = {
   success: boolean;
   message?: string;
-  vehicles?: Vehicle[];
-  total?: number;
-}
+  vehicles?: ApiVehicle[];
+  pagination?: {
+    page: number;
+    limit: number;
+    total: number;
+    totalPages: number;
+  };
+};
 
-export interface VehicleDetailResponse {
+export type VehicleDetailResponse = {
   success: boolean;
   message?: string;
-  vehicle?: Vehicle;
-}
+  vehicle?: ApiVehicle;
+};
+
+const normalizeImages = (images: any): string[] => {
+  if (!images) return [];
+  if (Array.isArray(images)) return images.filter(Boolean);
+  if (typeof images === 'string') {
+    // parfois JSON string
+    try {
+      const parsed = JSON.parse(images);
+      return Array.isArray(parsed) ? parsed.filter(Boolean) : [];
+    } catch {
+      return images ? [images] : [];
+    }
+  }
+  return [];
+};
+
+const normalizeVehicle = (v: any): ApiVehicle => {
+  return {
+    ...v,
+    images: normalizeImages(v.images),
+  } as ApiVehicle;
+};
 
 /**
- * Récupérer la liste des véhicules
+ * Liste publique des annonces (statut approuve)
  */
-export const getVehicles = async (params?: {
-  status?: string;
-  brand?: string;
-  minPrice?: number;
-  maxPrice?: number;
-  search?: string;
+export const listVehicles = async (params?: {
+  marque?: string;
+  modele?: string;
+  anneeMin?: number;
+  anneeMax?: number;
+  prixMin?: number;
+  prixMax?: number;
+  ville?: string;
+  carburant?: string;
+  transmission?: string;
   page?: number;
   limit?: number;
+  sort?: 'recent' | 'ancien' | 'prix_asc' | 'prix_desc';
 }): Promise<VehicleListResponse> => {
   try {
     const queryParams = new URLSearchParams();
     if (params) {
-      Object.entries(params).forEach(([key, value]) => {
-        if (value !== undefined && value !== null) {
-          queryParams.append(key, value.toString());
-        }
+      Object.entries(params).forEach(([k, val]) => {
+        if (val === undefined || val === null || val === '') return;
+        queryParams.append(k, String(val));
       });
     }
 
-    const url = `${API_ENDPOINTS.vehicles.list}?${queryParams.toString()}`;
+    const url = `${API_BASE_URL}/api/vehicles${queryParams.toString() ? `?${queryParams.toString()}` : ''}`;
     const response = await fetch(url, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
 
     const result = await response.json();
-
     if (!response.ok) {
-      return { success: false, message: result.message || 'Erreur lors de la récupération des véhicules' };
+      return { success: false, message: result?.error || result?.message || 'Erreur lors de la recuperation des annonces' };
     }
 
-    return { success: true, vehicles: result.vehicles, total: result.total };
+    const vehicles = Array.isArray(result?.vehicles) ? result.vehicles.map(normalizeVehicle) : [];
+
+    return {
+      success: true,
+      vehicles,
+      pagination: result?.pagination,
+    };
   } catch (error) {
     return handleApiError(error);
   }
 };
 
 /**
- * Récupérer les détails d'un véhicule
+ * Detail public d'une annonce
  */
-export const getVehicleDetail = async (id: number): Promise<VehicleDetailResponse> => {
+export const getVehicleById = async (id: number): Promise<VehicleDetailResponse> => {
   try {
-    const response = await fetch(API_ENDPOINTS.vehicles.detail(id), {
+    const response = await fetch(`${API_BASE_URL}/api/vehicles/${id}`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
     });
 
     const result = await response.json();
-
     if (!response.ok) {
-      return { success: false, message: result.message || 'Véhicule introuvable' };
+      return { success: false, message: result?.error || result?.message || 'Annonce introuvable' };
     }
 
-    return { success: true, vehicle: result.vehicle };
+    return { success: true, vehicle: normalizeVehicle(result.vehicle) };
   } catch (error) {
     return handleApiError(error);
   }
 };
 
 /**
- * Créer une nouvelle annonce
+ * Creer une annonce (auth) - coute 1 credit
  */
 export const createVehicle = async (data: VehicleFormData): Promise<VehicleDetailResponse> => {
   try {
-    const response = await fetch(API_ENDPOINTS.vehicles.create, {
+    const response = await fetch(`${API_BASE_URL}/api/vehicles`, {
       method: 'POST',
       headers: getAuthHeaders(),
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        ...data,
+        images: data.images || [],
+        equipements: data.equipements || [],
+      }),
     });
 
     const result = await response.json();
-
     if (!response.ok) {
-      return { success: false, message: result.message || 'Erreur lors de la création de l\'annonce' };
+      const msg = result?.error || result?.message || (Array.isArray(result?.errors) ? result.errors?.[0]?.msg : null) || 'Erreur lors de la creation';
+      return { success: false, message: msg };
     }
 
-    return { success: true, vehicle: result.vehicle };
+    return { success: true, vehicle: normalizeVehicle(result.vehicle) };
   } catch (error) {
     return handleApiError(error);
   }
 };
 
-/**
- * Mettre à jour une annonce
- */
 export const updateVehicle = async (id: number, data: Partial<VehicleFormData>): Promise<VehicleDetailResponse> => {
   try {
-    const response = await fetch(API_ENDPOINTS.vehicles.update(id), {
+    const response = await fetch(`${API_BASE_URL}/api/vehicles/${id}`, {
       method: 'PUT',
       headers: getAuthHeaders(),
-      body: JSON.stringify(data),
+      body: JSON.stringify({
+        ...data,
+        images: data.images,
+        equipements: data.equipements,
+      }),
     });
 
     const result = await response.json();
-
     if (!response.ok) {
-      return { success: false, message: result.message || 'Erreur lors de la mise à jour' };
+      const msg = result?.error || result?.message || 'Erreur lors de la mise a jour';
+      return { success: false, message: msg };
     }
 
-    return { success: true, vehicle: result.vehicle };
+    return { success: true, vehicle: normalizeVehicle(result.vehicle) };
   } catch (error) {
     return handleApiError(error);
   }
 };
 
-/**
- * Supprimer une annonce
- */
 export const deleteVehicle = async (id: number): Promise<{ success: boolean; message?: string }> => {
   try {
-    const response = await fetch(API_ENDPOINTS.vehicles.delete(id), {
+    const response = await fetch(`${API_BASE_URL}/api/vehicles/${id}`, {
       method: 'DELETE',
       headers: getAuthHeaders(),
     });
 
     const result = await response.json();
-
     if (!response.ok) {
-      return { success: false, message: result.message || 'Erreur lors de la suppression' };
+      return { success: false, message: result?.error || result?.message || 'Erreur lors de la suppression' };
     }
 
-    return { success: true, message: result.message };
+    return { success: true, message: result?.message || 'Annonce supprimee' };
   } catch (error) {
     return handleApiError(error);
   }
 };
 
 /**
- * Récupérer mes annonces
+ * Mes annonces (auth)
  */
-export const getMyVehicles = async (): Promise<VehicleListResponse> => {
+export const getMyListings = async (): Promise<VehicleListResponse> => {
   try {
-    const response = await fetch(API_ENDPOINTS.vehicles.myVehicles, {
+    const response = await fetch(`${API_BASE_URL}/api/vehicles/user/my-listings`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });
 
     const result = await response.json();
-
     if (!response.ok) {
-      return { success: false, message: result.message || 'Erreur lors de la récupération de vos annonces' };
+      return { success: false, message: result?.error || result?.message || 'Erreur lors de la recuperation de vos annonces' };
     }
 
-    return { success: true, vehicles: result.vehicles };
+    const vehicles = Array.isArray(result?.vehicles) ? result.vehicles.map(normalizeVehicle) : [];
+    return { success: true, vehicles };
   } catch (error) {
     return handleApiError(error);
   }
 };
 
-/**
- * Incrémenter le compteur de vues
- */
-export const incrementView = async (id: number): Promise<{ success: boolean }> => {
-  try {
-    await fetch(API_ENDPOINTS.vehicles.incrementView(id), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    return { success: true };
-  } catch (error) {
-    return { success: false };
-  }
+export const vehicleService = {
+  listVehicles,
+  getVehicleById,
+  createVehicle,
+  updateVehicle,
+  deleteVehicle,
+  getMyListings,
 };
-
-/**
- * Incrémenter le compteur de contacts WhatsApp
- */
-export const incrementWhatsApp = async (id: number): Promise<{ success: boolean }> => {
-  try {
-    await fetch(API_ENDPOINTS.vehicles.incrementWhatsApp(id), {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    });
-    return { success: true };
-  } catch (error) {
-    return { success: false };
-  }
-};
-

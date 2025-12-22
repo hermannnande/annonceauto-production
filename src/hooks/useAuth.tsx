@@ -1,52 +1,32 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+﻿import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import * as authService from '../services/auth.service';
 
-interface User {
-  id: number;
-  email: string;
-  nom: string;
-  prenom: string;
-  telephone: string;
-  ville?: string;
-  role: 'vendeur' | 'admin';
-  credits: number;
-  avatar_url?: string;
-  verified?: boolean;
-}
+export type UserRole = 'vendeur' | 'admin' | 'super_admin';
+
+export type User = authService.User;
 
 interface AuthContextType {
   user: User | null;
   token: string | null;
   loading: boolean;
+  isAuthenticated: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (data: any) => Promise<void>;
+  register: (data: authService.RegisterData) => Promise<void>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
   updateUser: (data: Partial<User>) => void;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-function mapApiUserToLocal(user: authService.User): User {
-  const [firstName, ...rest] = (user.full_name || '').split(' ');
-  return {
-    id: user.id,
-    email: user.email,
-    nom: firstName || '',
-    prenom: rest.join(' ') || '',
-    telephone: user.phone,
-    role: user.role === 'admin' ? 'admin' : 'vendeur',
-    credits: user.credits,
-    avatar_url: user.profile_image,
-    verified: user.is_verified,
-  };
-}
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // Charge les infos stockées si présentes
+  const isAuthenticated = useMemo(() => Boolean(token), [token]);
+
+  // Charger depuis le storage au demarrage
   useEffect(() => {
     const storedToken = localStorage.getItem('token');
     const storedUser = localStorage.getItem('user');
@@ -61,6 +41,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         localStorage.removeItem('user');
       }
     }
+
     setLoading(false);
   }, []);
 
@@ -71,54 +52,68 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       throw new Error(response.message || 'Erreur de connexion');
     }
 
-    const mappedUser = mapApiUserToLocal(response.user);
     setToken(response.token);
-    setUser(mappedUser);
+    setUser(response.user);
     localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(mappedUser));
+    localStorage.setItem('user', JSON.stringify(response.user));
   };
 
-  const register = async (data: any) => {
-    const registerData = {
-      email: data.email,
-      password: data.password,
-      nom: data.nom,
-      prenom: data.prenom,
-      telephone: data.telephone,
-      ville: data.ville,
-      role: 'vendeur' as const,
-    };
-
-    const response = await authService.register(registerData);
+  const register = async (data: authService.RegisterData) => {
+    const response = await authService.register(data);
 
     if (!response.success || !response.token || !response.user) {
       throw new Error(response.message || "Erreur lors de l'inscription");
     }
 
-    const mappedUser = mapApiUserToLocal(response.user);
     setToken(response.token);
-    setUser(mappedUser);
+    setUser(response.user);
     localStorage.setItem('token', response.token);
-    localStorage.setItem('user', JSON.stringify(mappedUser));
+    localStorage.setItem('user', JSON.stringify(response.user));
   };
 
   const logout = () => {
     setUser(null);
     setToken(null);
-    localStorage.removeItem('token');
-    localStorage.removeItem('user');
+    authService.logout();
+  };
+
+  const refreshUser = async () => {
+    if (!token) return;
+
+    const response = await authService.getProfile();
+    if (!response.success || !response.user) {
+      // Token invalide/expire, on deconnecte
+      logout();
+      throw new Error(response.message || 'Session expiree. Veuillez vous reconnecter.');
+    }
+
+    setUser(response.user);
+    localStorage.setItem('user', JSON.stringify(response.user));
   };
 
   const updateUser = (data: Partial<User>) => {
-    if (user) {
-      const updatedUser = { ...user, ...data };
-      setUser(updatedUser);
-      localStorage.setItem('user', JSON.stringify(updatedUser));
-    }
+    setUser((prev) => {
+      if (!prev) return prev;
+      const next = { ...prev, ...data };
+      localStorage.setItem('user', JSON.stringify(next));
+      return next;
+    });
   };
 
   return (
-    <AuthContext.Provider value={{ user, token, loading, login, register, logout, updateUser }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        token,
+        loading,
+        isAuthenticated,
+        login,
+        register,
+        logout,
+        refreshUser,
+        updateUser,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -127,7 +122,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error("useAuth doit être utilisé à l'intérieur d'un AuthProvider");
+    throw new Error("useAuth doit etre utilise a l'interieur d'un AuthProvider");
   }
   return context;
 }
