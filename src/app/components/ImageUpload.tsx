@@ -1,59 +1,125 @@
-import { useState, useCallback } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Upload, X, Image as ImageIcon, CheckCircle, Sparkles } from 'lucide-react';
+import { Upload, X, Image as ImageIcon, CheckCircle, Sparkles, Loader2, AlertCircle } from 'lucide-react';
 import { Card } from './ui/card';
+import { uploadMultipleImages } from '../../services/upload.service';
 
 interface ImageUploadProps {
   onImagesChange: (images: string[]) => void;
   maxImages?: number;
 }
 
+type UploadItem = {
+  id: string;
+  previewUrl: string;
+  remoteUrl?: string;
+  status: 'pending' | 'uploading' | 'done' | 'error';
+};
+
+const uid = () => Math.random().toString(36).slice(2);
+
 export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps) {
-  const [images, setImages] = useState<string[]>([]);
+  const [items, setItems] = useState<UploadItem[]>([]);
   const [isDragging, setIsDragging] = useState(false);
+  const [error, setError] = useState('');
+
+  const remoteImages = useMemo(() => items.filter(i => i.status === 'done' && i.remoteUrl).map(i => i.remoteUrl!) , [items]);
+
+  useEffect(() => {
+    onImagesChange(remoteImages);
+  }, [onImagesChange, remoteImages]);
+
+  useEffect(() => {
+    return () => {
+      // cleanup previews
+      items.forEach(i => {
+        if (i.previewUrl.startsWith('blob:')) {
+          try { URL.revokeObjectURL(i.previewUrl); } catch {}
+        }
+      });
+    };
+  }, [items]);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
     e.preventDefault();
     setIsDragging(false);
-
     const files = Array.from(e.dataTransfer.files);
-    handleFiles(files);
+    void handleFiles(files);
   }, []);
 
   const handleFileInput = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files);
-      handleFiles(files);
+      void handleFiles(files);
+      e.target.value = '';
     }
   };
 
-  const handleFiles = (files: File[]) => {
+  const handleFiles = async (files: File[]) => {
+    setError('');
+
     const imageFiles = files.filter(file => file.type.startsWith('image/'));
-    
-    imageFiles.forEach(file => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImages(prev => {
-          const newImages = [...prev, reader.result as string].slice(0, maxImages);
-          onImagesChange(newImages);
-          return newImages;
-        });
-      };
-      reader.readAsDataURL(file);
+    if (imageFiles.length === 0) {
+      setError('Veuillez sÃ©lectionner uniquement des images.');
+      return;
+    }
+
+    const spaceLeft = Math.max(0, maxImages - items.length);
+    const selected = imageFiles.slice(0, spaceLeft);
+    if (selected.length === 0) {
+      setError(`Vous avez dÃ©jÃ  atteint la limite (${maxImages} images).`);
+      return;
+    }
+
+    const placeholders: UploadItem[] = selected.map((f) => ({
+      id: uid(),
+      previewUrl: URL.createObjectURL(f),
+      status: 'uploading',
+    }));
+
+    setItems(prev => [...prev, ...placeholders]);
+
+    const result = await uploadMultipleImages(selected);
+    if (!result.success || !result.urls) {
+      setItems(prev => prev.map(i => placeholders.some(p => p.id === i.id) ? { ...i, status: 'error' } : i));
+      setError(result.message || 'Erreur lors de l\'upload des images');
+      return;
+    }
+
+    setItems(prev => {
+      let urlIdx = 0;
+      return prev.map(i => {
+        const isPlaceholder = placeholders.some(p => p.id === i.id);
+        if (!isPlaceholder) return i;
+        const remoteUrl = result.urls?.[urlIdx++];
+        return remoteUrl ? { ...i, remoteUrl, status: 'done' } : { ...i, status: 'error' };
+      });
     });
   };
 
   const removeImage = (index: number) => {
-    setImages(prev => {
-      const newImages = prev.filter((_, i) => i !== index);
-      onImagesChange(newImages);
-      return newImages;
+    setItems(prev => {
+      const toRemove = prev[index];
+      if (toRemove?.previewUrl?.startsWith('blob:')) {
+        try { URL.revokeObjectURL(toRemove.previewUrl); } catch {}
+      }
+      return prev.filter((_, i) => i !== index);
     });
   };
 
+  const previewImages = useMemo(() => {
+    return items.map(i => i.remoteUrl || i.previewUrl);
+  }, [items]);
+
   return (
     <div className="space-y-4">
-      {/* Upload Zone */}
+      {error && (
+        <div className="bg-red-50 border border-red-200 rounded-xl p-4 flex items-center gap-3">
+          <AlertCircle className="w-5 h-5 text-red-600" />
+          <span className="text-red-800 font-medium">{error}</span>
+        </div>
+      )}
+
       <motion.div
         onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
         onDragLeave={() => setIsDragging(false)}
@@ -86,77 +152,79 @@ export function ImageUpload({ onImagesChange, maxImages = 10 }: ImageUploadProps
           </motion.div>
 
           <h3 className="text-lg font-bold text-gray-900 mb-2 font-[var(--font-poppins)]">
-            {isDragging ? 'Déposez vos photos ici' : 'Ajoutez vos photos'}
+            {isDragging ? 'DÃ©posez vos photos ici' : 'Ajoutez vos photos'}
           </h3>
           <p className="text-sm text-gray-500 mb-4">
-            Glissez-déposez ou cliquez pour sélectionner ({images.length}/{maxImages})
+            Glissez-dÃ©posez ou cliquez pour sÃ©lectionner ({items.length}/{maxImages})
           </p>
 
           <div className="flex items-center gap-2 text-xs text-gray-400">
             <Sparkles className="w-4 h-4" />
-            <span>JPG, PNG jusqu'à 10MB par image</span>
+            <span>JPG, PNG jusqu'Ã  5MB par image</span>
           </div>
         </div>
 
-        {/* Progress Bar */}
         <div className="absolute bottom-0 left-0 right-0 h-1 bg-gray-200 rounded-b-2xl overflow-hidden">
           <motion.div
             initial={{ width: 0 }}
-            animate={{ width: `${(images.length / maxImages) * 100}%` }}
+            animate={{ width: `${(items.length / maxImages) * 100}%` }}
             className="h-full bg-gradient-to-r from-[#FACC15] to-[#FBBF24]"
           />
         </div>
       </motion.div>
 
-      {/* Image Preview Grid */}
       <AnimatePresence>
-        {images.length > 0 && (
+        {previewImages.length > 0 && (
           <motion.div
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: 'auto' }}
             exit={{ opacity: 0, height: 0 }}
             className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4"
           >
-            {images.map((image, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, scale: 0.8 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0, scale: 0.8 }}
-                className="relative group aspect-square"
-              >
-                <Card className="overflow-hidden h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
-                  <img
-                    src={image}
-                    alt={`Upload ${index + 1}`}
-                    className="w-full h-full object-cover"
-                  />
+            {previewImages.map((image, index) => {
+              const item = items[index];
+              const isUploading = item?.status === 'uploading';
+              const isError = item?.status === 'error';
 
-                  {/* First Image Badge */}
-                  {index === 0 && (
-                    <div className="absolute top-2 left-2 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
-                      <CheckCircle className="w-3 h-3" />
-                      Photo principale
+              return (
+                <motion.div
+                  key={item?.id || index}
+                  initial={{ opacity: 0, scale: 0.8 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.8 }}
+                  className="relative group aspect-square"
+                >
+                  <Card className="overflow-hidden h-full border-0 shadow-lg hover:shadow-xl transition-shadow">
+                    <img src={image} alt={`Upload ${index + 1}`} className="w-full h-full object-cover" />
+
+                    {index === 0 && (
+                      <div className="absolute top-2 left-2 bg-gradient-to-r from-[#FACC15] to-[#FBBF24] text-[#0F172A] text-xs font-bold px-3 py-1 rounded-full flex items-center gap-1 shadow-lg">
+                        <CheckCircle className="w-3 h-3" />
+                        Photo principale
+                      </div>
+                    )}
+
+                    <motion.button
+                      whileHover={{ scale: 1.1 }}
+                      whileTap={{ scale: 0.9 }}
+                      type="button"
+                      onClick={() => removeImage(index)}
+                      className="absolute top-2 right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
+                    >
+                      <X className="w-4 h-4 text-white" />
+                    </motion.button>
+
+                    <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      {isUploading ? (
+                        <Loader2 className="w-8 h-8 text-white animate-spin" />
+                      ) : (
+                        <ImageIcon className={`w-8 h-8 ${isError ? 'text-red-300' : 'text-white'}`} />
+                      )}
                     </div>
-                  )}
-
-                  {/* Remove Button */}
-                  <motion.button
-                    whileHover={{ scale: 1.1 }}
-                    whileTap={{ scale: 0.9 }}
-                    onClick={() => removeImage(index)}
-                    className="absolute top-2 right-2 w-8 h-8 bg-red-500 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity shadow-lg"
-                  >
-                    <X className="w-4 h-4 text-white" />
-                  </motion.button>
-
-                  {/* Overlay on Hover */}
-                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                    <ImageIcon className="w-8 h-8 text-white" />
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
+                  </Card>
+                </motion.div>
+              );
+            })}
           </motion.div>
         )}
       </AnimatePresence>

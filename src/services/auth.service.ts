@@ -1,11 +1,13 @@
-import { API_ENDPOINTS, getAuthHeaders, handleApiError } from '../config/api';
+import { API_BASE_URL } from '../config/api';
 
 export interface RegisterData {
   email: string;
   password: string;
-  full_name: string;
-  phone: string;
-  role?: 'vendor' | 'admin';
+  nom: string;
+  prenom: string;
+  telephone: string;
+  ville?: string;
+  role?: 'vendeur' | 'admin';
 }
 
 export interface LoginData {
@@ -16,13 +18,13 @@ export interface LoginData {
 export interface User {
   id: number;
   email: string;
-  full_name: string;
-  phone: string;
-  role: 'vendor' | 'admin';
+  nom: string;
+  prenom: string;
+  telephone: string;
+  ville?: string;
+  role: 'vendeur' | 'admin' | 'super_admin';
   credits: number;
-  profile_image?: string;
-  is_verified: boolean;
-  is_active: boolean;
+  verified?: boolean;
   created_at: string;
 }
 
@@ -33,12 +35,31 @@ export interface AuthResponse {
   user?: User;
 }
 
-/**
- * Inscription d'un nouvel utilisateur
- */
+const getAuthHeaders = () => {
+  const token = localStorage.getItem('token');
+  return {
+    'Content-Type': 'application/json',
+    ...(token && { Authorization: `Bearer ${token}` }),
+  };
+};
+
+const handleApiError = (error: any) => {
+  if (error?.response) {
+    const message = error.response.data?.message || 'Une erreur est survenue';
+    return { success: false, message };
+  }
+  if (error?.request) {
+    return {
+      success: false,
+      message: 'Impossible de contacter le serveur. VÃ©rifiez votre connexion.',
+    };
+  }
+  return { success: false, message: error?.message || 'Erreur inconnue' };
+};
+
 export const register = async (data: RegisterData): Promise<AuthResponse> => {
   try {
-    const response = await fetch(API_ENDPOINTS.auth.register, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -47,10 +68,9 @@ export const register = async (data: RegisterData): Promise<AuthResponse> => {
     const result = await response.json();
 
     if (!response.ok) {
-      return { success: false, message: result.message || 'Erreur lors de l\'inscription' };
+      return { success: false, message: result.error || 'Erreur lors de l\'inscription' };
     }
 
-    // Sauvegarder le token et les infos utilisateur
     if (result.token) {
       localStorage.setItem('token', result.token);
       localStorage.setItem('user', JSON.stringify(result.user));
@@ -62,12 +82,9 @@ export const register = async (data: RegisterData): Promise<AuthResponse> => {
   }
 };
 
-/**
- * Connexion d'un utilisateur
- */
 export const login = async (data: LoginData): Promise<AuthResponse> => {
   try {
-    const response = await fetch(API_ENDPOINTS.auth.login, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data),
@@ -76,10 +93,9 @@ export const login = async (data: LoginData): Promise<AuthResponse> => {
     const result = await response.json();
 
     if (!response.ok) {
-      return { success: false, message: result.message || 'Email ou mot de passe incorrect' };
+      return { success: false, message: result.error || 'Email ou mot de passe incorrect' };
     }
 
-    // Sauvegarder le token et les infos utilisateur
     if (result.token) {
       localStorage.setItem('token', result.token);
       localStorage.setItem('user', JSON.stringify(result.user));
@@ -91,12 +107,9 @@ export const login = async (data: LoginData): Promise<AuthResponse> => {
   }
 };
 
-/**
- * Récupérer le profil de l'utilisateur connecté
- */
 export const getProfile = async (): Promise<AuthResponse> => {
   try {
-    const response = await fetch(API_ENDPOINTS.auth.profile, {
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
       method: 'GET',
       headers: getAuthHeaders(),
     });
@@ -104,10 +117,9 @@ export const getProfile = async (): Promise<AuthResponse> => {
     const result = await response.json();
 
     if (!response.ok) {
-      return { success: false, message: result.message || 'Erreur lors de la récupération du profil' };
+      return { success: false, message: result.error || 'Erreur lors de la rÃ©cupÃ©ration du profil' };
     }
 
-    // Mettre à jour les infos utilisateur
     localStorage.setItem('user', JSON.stringify(result.user));
 
     return { success: true, user: result.user };
@@ -116,29 +128,39 @@ export const getProfile = async (): Promise<AuthResponse> => {
   }
 };
 
-/**
- * Déconnexion
- */
+export const updateProfile = async (data: Partial<Pick<User, 'nom' | 'prenom' | 'telephone' | 'email' | 'ville'>>) => {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/users/me`, {
+      method: 'PUT',
+      headers: getAuthHeaders(),
+      body: JSON.stringify(data),
+    });
+
+    const result = await response.json();
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Erreur de mise Ã  jour');
+    }
+
+    localStorage.setItem('user', JSON.stringify(result.user));
+    return result;
+  } catch (error: any) {
+    throw new Error(error?.message || 'Erreur de mise Ã  jour');
+  }
+};
+
 export const logout = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('user');
-  window.location.href = '/login';
 };
 
-/**
- * Vérifier si l'utilisateur est connecté
- */
 export const isAuthenticated = (): boolean => {
   return !!localStorage.getItem('token');
 };
 
-/**
- * Récupérer l'utilisateur depuis le localStorage
- */
 export const getCurrentUser = (): User | null => {
   const userStr = localStorage.getItem('user');
   if (!userStr) return null;
-  
   try {
     return JSON.parse(userStr);
   } catch {
@@ -146,19 +168,12 @@ export const getCurrentUser = (): User | null => {
   }
 };
 
-/**
- * Vérifier si l'utilisateur est admin
- */
 export const isAdmin = (): boolean => {
   const user = getCurrentUser();
-  return user?.role === 'admin';
+  return user?.role === 'admin' || user?.role === 'super_admin';
 };
 
-/**
- * Vérifier si l'utilisateur est vendeur
- */
 export const isVendor = (): boolean => {
   const user = getCurrentUser();
-  return user?.role === 'vendor';
+  return user?.role === 'vendeur';
 };
-
