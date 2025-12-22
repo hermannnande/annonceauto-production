@@ -1,4 +1,4 @@
-import { API_ENDPOINTS, getAuthHeaders, getAuthHeadersMultipart, handleApiError } from '../config/api';
+﻿import { API_ENDPOINTS, getAuthHeaders, getAuthHeadersMultipart, handleApiError } from '../config/api';
 
 export interface UploadResponse {
   success: boolean;
@@ -52,7 +52,7 @@ export const uploadMultipleImages = async (files: File[]): Promise<{
     if (failedUploads.length > 0) {
       return {
         success: false,
-        message: `${failedUploads.length} image(s) n'ont pas pu être uploadées`,
+        message: `${failedUploads.length} image(s) n'ont pas pu Ãªtre uploadÃ©es`,
       };
     }
 
@@ -62,5 +62,10 @@ export const uploadMultipleImages = async (files: File[]): Promise<{
   } catch (error) {
     return handleApiError(error);
   }
+};
+
+export const uploadService = {
+  uploadImage,
+  uploadMultipleImages
 };
 
