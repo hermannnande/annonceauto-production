@@ -106,31 +106,37 @@ async function createSuperAdmin() {
     const adminEmail = 'hermannnande@gmail.com';
     const hashedPassword = '$2a$10$XLMUFLdE30tgVbhmoejpxONmWybZTU/T25cAkLSK8oQEYViawy8Cm'; // Nande19912012.
 
-    const existing = await query('SELECT id FROM users WHERE email = $1', [adminEmail]);
-
-    const tryRole = async (role) => {
-      if (existing.rows.length === 0) {
-        await query(
-          `INSERT INTO users (email, password, nom, prenom, telephone, role, credits, verified, created_at)
-           VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
-          [adminEmail, hashedPassword, 'nande', 'hermann', '+2250778030075', role, 1000, true]
-        );
-      } else {
-        await query(
-          'UPDATE users SET password = $1, role = $2, verified = $3, credits = $4 WHERE email = $5',
-          [hashedPassword, role, true, 1000, adminEmail]
-        );
-      }
-    };
-
+    // Pick desired role based on DB check constraint (avoids noisy errors)
+    let desiredRole = 'admin';
     try {
-      await tryRole('super_admin');
+      const constraint = await query(
+        `SELECT pg_get_constraintdef(c.oid) AS def
+         FROM pg_constraint c
+         WHERE c.conname = 'users_role_check'
+         LIMIT 1`
+      );
+      const def = constraint?.rows?.[0]?.def || '';
+      if (def.includes('super_admin')) desiredRole = 'super_admin';
     } catch {
-      // fallback if DB constraint does not allow super_admin
-      await tryRole('admin');
+      // ignore
     }
 
-    console.log('SUPER_ADMIN ensured:', adminEmail);
+    const existing = await query('SELECT id FROM users WHERE email = $1', [adminEmail]);
+
+    if (existing.rows.length === 0) {
+      await query(
+        `INSERT INTO users (email, password, nom, prenom, telephone, role, credits, verified, created_at)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW())`,
+        [adminEmail, hashedPassword, 'nande', 'hermann', '+2250778030075', desiredRole, 1000, true]
+      );
+    } else {
+      await query(
+        'UPDATE users SET password = $1, role = $2, verified = $3, credits = $4 WHERE email = $5',
+        [hashedPassword, desiredRole, true, 1000, adminEmail]
+      );
+    }
+
+    console.log('SUPER_ADMIN ensured:', adminEmail, 'role:', desiredRole);
   } catch (error) {
     console.log('SUPER_ADMIN init skipped:', error.message);
   }
