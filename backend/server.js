@@ -1,4 +1,4 @@
-import express from 'express';
+﻿import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
 import dotenv from 'dotenv';
@@ -12,6 +12,7 @@ import creditRoutes from './src/routes/credit.routes.js';
 import paymentRoutes from './src/routes/payment.routes.js';
 import userRoutes from './src/routes/user.routes.js';
 import uploadRoutes from './src/routes/upload.routes.js';
+import notificationRoutes from './src/routes/notification.routes.js';
 
 const app = express();
 const PORT = process.env.PORT || 5000;
@@ -65,6 +66,7 @@ app.use('/api/credits', creditRoutes);
 app.use('/api/payments', paymentRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/upload', uploadRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Root/health
 app.get('/', (req, res) => {
@@ -79,6 +81,7 @@ app.get('/', (req, res) => {
       payments: '/api/payments',
       users: '/api/users',
       upload: '/api/upload',
+      notifications: '/api/notifications',
     },
   });
 });
@@ -165,3 +168,4 @@ app.listen(PORT, '0.0.0.0', async () => {
 });
 
 export default app;
+
