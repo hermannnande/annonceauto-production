@@ -18,6 +18,7 @@ import {
   DollarSign,
   BarChart3,
   Wallet,
+  MessageSquare,
 } from "lucide-react";
 import { Button } from "../ui/button";
 import { useAuth } from "../../../hooks/useAuth";
@@ -36,6 +37,7 @@ export function DashboardLayout({ children, userType }: DashboardLayoutProps) {
   const vendorMenuItems = useMemo(() => ([
     { icon: LayoutDashboard, label: "Vue d'ensemble", path: "/dashboard/vendeur" },
     { icon: Car, label: "Mes annonces", path: "/dashboard/vendeur/annonces" },
+    { icon: MessageSquare, label: "Messages", path: "/dashboard/vendeur/messages" },
     { icon: TrendingUp, label: "Booster", path: "/dashboard/vendeur/booster" },
     { icon: CreditCard, label: "Recharger", path: "/dashboard/vendeur/recharge" },
     { icon: BarChart3, label: "Statistiques", path: "/dashboard/vendeur/stats" },
