@@ -1,0 +1,118 @@
+
+╔══════════════════════════════════════════════════════════════════════════╗
+║                                                                          ║
+║     📋 COMMENT DÉMARRER LE BACKEND ET LE FRONTEND MANUELLEMENT          ║
+║                                                                          ║
+╚══════════════════════════════════════════════════════════════════════════╝
+
+
+Je ne peux pas démarrer les serveurs automatiquement à cause des accents
+dans le nom du dossier "Véhicules".
+
+Voici comment le faire MANUELLEMENT (c'est très simple !) :
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  MÉTHODE 1 : DOUBLE-CLIQUER (LE PLUS SIMPLE) ⭐
+═══════════════════════════════════════════════════════════════════════════════
+
+Dans le dossier de votre projet, j'ai créé 2 fichiers :
+
+  1. 📄 START-BACKEND.bat     ← Double-cliquez dessus
+  2. 📄 START-FRONTEND.bat    ← Double-cliquez dessus
+
+ORDRE À SUIVRE :
+  1️⃣  Double-cliquez sur START-BACKEND.bat  (une fenêtre CMD s'ouvre)
+  2️⃣  Attendez 3-5 secondes
+  3️⃣  Double-cliquez sur START-FRONTEND.bat (une autre fenêtre CMD s'ouvre)
+  
+  ✅ C'EST TOUT !
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  MÉTHODE 2 : LIGNE DE COMMANDE MANUELLE
+═══════════════════════════════════════════════════════════════════════════════
+
+TERMINAL 1 - BACKEND :
+──────────────────────
+
+1. Ouvrez un nouveau terminal CMD (pas PowerShell)
+   
+2. Tapez ces commandes :
+
+   cd "C:\Users\nande\Desktop\Site Annonces Véhicules (2)\backend"
+   node server.clean.js
+
+3. Vous devriez voir :
+   🚀 Serveur démarré sur le port 5000
+   
+4. NE FERMEZ PAS CE TERMINAL !
+
+
+TERMINAL 2 - FRONTEND :
+───────────────────────
+
+1. Ouvrez un DEUXIÈME terminal CMD
+   
+2. Tapez ces commandes :
+
+   cd "C:\Users\nande\Desktop\Site Annonces Véhicules (2)"
+   pnpm dev
+
+3. Vous devriez voir :
+   VITE v... ready in ...ms
+   ➜  Local:   http://localhost:5173/
+   
+4. NE FERMEZ PAS CE TERMINAL !
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  ✅ VÉRIFICATION
+═══════════════════════════════════════════════════════════════════════════════
+
+Une fois les 2 terminaux ouverts, testez :
+
+  1. Backend : http://localhost:5000/health
+     → Vous devez voir : {"status":"OK","timestamp":"..."}
+     
+  2. Frontend : http://localhost:5173
+     → Vous devez voir le site
+     
+  3. Page Boost : http://localhost:5173/dashboard/vendeur/booster
+     → Vous pouvez maintenant tester le boost !
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  ⚠️  IMPORTANT
+═══════════════════════════════════════════════════════════════════════════════
+
+• Les 2 terminaux/fenêtres CMD DOIVENT rester ouverts
+• Ne les fermez pas tant que vous travaillez sur le site
+• Si vous fermez un terminal, il faut le redémarrer
+
+
+═══════════════════════════════════════════════════════════════════════════════
+  🆘 EN CAS DE PROBLÈME
+═══════════════════════════════════════════════════════════════════════════════
+
+ERREUR : "Cannot connect to database"
+  → PostgreSQL n'est pas démarré
+  → Ou DB_PASSWORD incorrect dans backend\.env
+
+ERREUR : "Port 5000 already in use"
+  → Un autre processus utilise le port
+  → Redémarrez votre ordinateur ou tuez le processus
+
+ERREUR : "pnpm: command not found"
+  → Installez pnpm : npm install -g pnpm
+
+
+═══════════════════════════════════════════════════════════════════════════════
+
+🎯 CONSEIL : Utilisez la MÉTHODE 1 (double-clic sur les fichiers .bat)
+           C'est le plus simple !
+
+
+
+
+
